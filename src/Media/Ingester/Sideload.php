@@ -101,9 +101,7 @@ class Sideload extends AbstractIngester
         $files = [];
         $iterator = new \DirectoryIterator($this->getFilesDir());
         foreach ($iterator as $fileinfo) {
-            // The file must be owned by the web server for LocalStore:put() to
-            // sucessfully chmod.
-            if ($fileinfo->isFile() && ($fileinfo->getOwner() === posix_geteuid())) {
+            if ($this->canSideload($fileinfo)) {
                 $files[$fileinfo->getFilename()] = $fileinfo->getFilename();
             }
         }
@@ -113,5 +111,21 @@ class Sideload extends AbstractIngester
     public function getFilesDir()
     {
         return OMEKA_PATH . '/modules/FileSideload/files';
+    }
+
+    /**
+     * Can a file be sideloaded?
+     *
+     * The file must be a regular file, readable, and owned by the web server
+     * (for LocalStore:put() to sucessfully chmod).
+     *
+     * @param SplFileInfo $fileinfo
+     * @return bool
+     */
+    public function canSideload(\SplFileInfo $fileinfo)
+    {
+        return $fileinfo->isFile()
+            && $fileinfo->isReadable()
+            && ($fileinfo->getOwner() === posix_geteuid());
     }
 }
