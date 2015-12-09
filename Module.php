@@ -20,7 +20,6 @@ class Module extends AbstractModule
             OmekaEvent::SERVICE_REGISTERED_NAMES,
             function (Event $event) {
                 $names = $event->getParam('registered_names');
-                $names[] = 'foobar';
                 $event->setParam('registered_names', $names);
             }
         );
