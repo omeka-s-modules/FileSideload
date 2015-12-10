@@ -12,6 +12,11 @@ use Zend\View\Renderer\PhpRenderer;
 
 class Module extends AbstractModule
 {
+    /**
+     * @var ConfigForm
+     */
+    protected $configForm;
+
     public function getConfig()
     {
         return include __DIR__ . '/config/module.config.php';
@@ -48,26 +53,28 @@ class Module extends AbstractModule
 
     public function getConfigForm(PhpRenderer $renderer)
     {
-        $services = $this->getServiceLocator();
-        $settings = $services->get('Omeka/Settings');
-        $form = new ConfigForm($this->getServiceLocator());
-        $form->setData(['directory' => $settings->get('file_sideload_directory')]);
-        return $renderer->formCollection($form, false);
+        if (!$this->configForm) {
+            $services = $this->getServiceLocator();
+            $settings = $services->get('Omeka/Settings');
+            $this->configForm = new ConfigForm($services);
+            $this->configForm->setData(['directory' => $settings->get('file_sideload_directory')]);
+        }
+        return $renderer->formCollection($this->configForm, false);
     }
 
     public function handleConfigForm(AbstractController $controller)
     {
         $services = $this->getServiceLocator();
-        $form = new ConfigForm($services);
-        $form->setData($controller->params()->fromPost());
-        if ($form->isValid()) {
-            $settings = $services->get('Omeka/Settings');
-            $settings->set('file_sideload_directory', $form->getData()['directory']);
+        $this->configForm = new ConfigForm($services);
+        $this->configForm->setData($controller->params()->fromPost());
+        if ($this->configForm->isValid()) {
+            $services->get('Omeka/Settings')->set(
+                'file_sideload_directory',
+                $this->configForm->getData()['directory']
+            );
             return true;
-        } else {
-            $controller->messenger()->addErrors($form->getMessages());
-            return false;
         }
+        return false;
     }
 }
 
