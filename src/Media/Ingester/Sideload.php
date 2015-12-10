@@ -53,7 +53,7 @@ class Sideload extends AbstractIngester
 
         $file = $this->getServiceLocator()->get('Omeka\File');
         $file->setSourceName($data['ingest_filename']);
-        $file->setTempPath($this->getFilesDir() . '/' . $data['ingest_filename']);
+        $file->setTempPath($this->getDirectory() . '/' . $data['ingest_filename']);
 
         $fileManager = $this->getServiceLocator()->get('Omeka\File\Manager');
         $hasThumbnails = $fileManager->storeThumbnails($file);
@@ -81,7 +81,7 @@ class Sideload extends AbstractIngester
         $select->setOptions([
             'label' => $view->translate('File'),
             'value_options' => $this->getFiles(),
-            'empty_option' => 'Select a file to sideload ...',
+            'empty_option' => 'Select a file to sideload...',
             'info' => $view->translate('The filename.'),
         ]);
         $select->setAttributes([
@@ -99,18 +99,27 @@ class Sideload extends AbstractIngester
     public function getFiles()
     {
         $files = [];
-        $iterator = new \DirectoryIterator($this->getFilesDir());
-        foreach ($iterator as $fileinfo) {
-            if ($this->canSideload($fileinfo)) {
-                $files[$fileinfo->getFilename()] = $fileinfo->getFilename();
+        $directory = $this->getDirectory();
+        if (is_dir($directory)) {
+            $iterator = new \DirectoryIterator($directory);
+            foreach ($iterator as $fileinfo) {
+                if ($this->canSideload($fileinfo)) {
+                    $files[$fileinfo->getFilename()] = $fileinfo->getFilename();
+                }
             }
         }
         return $files;
     }
 
-    public function getFilesDir()
+    /**
+     * Get the sideload directory.
+     *
+     * @return string
+     */
+    public function getDirectory()
     {
-        return OMEKA_PATH . '/modules/FileSideload/files';
+        $settings = $this->getServiceLocator()->get('Omeka\Settings');
+        return $settings->get('file_sideload_directory');
     }
 
     /**
