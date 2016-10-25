@@ -2,7 +2,6 @@
 namespace FileSideload;
 
 use FileSideload\Form\ConfigForm;
-use Omeka\Event\Event as OmekaEvent;
 use Omeka\Module\AbstractModule;
 use Zend\EventManager\Event;
 use Zend\EventManager\SharedEventManagerInterface;
@@ -32,7 +31,7 @@ class Module extends AbstractModule
     {
         $sharedEventManager->attach(
             'Omeka\Media\Ingester\Manager',
-            OmekaEvent::SERVICE_REGISTERED_NAMES,
+            'service.registered.names',
             /**
              * Remove sideload ingester from list of registered ingesters if
              * there are no available files to sideload.
