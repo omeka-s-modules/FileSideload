@@ -1,8 +1,8 @@
 <?php
 return [
     'media_ingesters' => [
-        'invokables' => [
-            'sideload' => 'FileSideload\Media\Ingester\Sideload',
+        'factories' => [
+            'sideload' => 'FileSideload\Service\MediaIngesterSideloadFactory',
         ],
     ],
 ];

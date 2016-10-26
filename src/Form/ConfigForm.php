@@ -1,20 +1,18 @@
 <?php
 namespace FileSideload\Form;
 
-use Omeka\Form\AbstractForm;
+use Zend\Form\Form;
 use Zend\Validator\Callback;
 
-class ConfigForm extends AbstractForm
+class ConfigForm extends Form
 {
-    public function buildForm()
+    public function init()
     {
-        $translator = $this->getTranslator();
-
         $this->add([
             'name' => 'directory',
             'type' => 'Text',
             'options' => [
-                'label' => $translator->translate('Sideload Directory'),
+                'label' => 'Sideload Directory', // @translate
             ],
             'attributes' => [
                 'required' => true,
@@ -33,7 +31,7 @@ class ConfigForm extends AbstractForm
                     'name' => 'Callback',
                     'options' => [
                         'messages' => [
-                            Callback::INVALID_VALUE => $translator->translate('The provided directory is not valid'),
+                            Callback::INVALID_VALUE => 'The provided directory is not valid', // @translate
                         ],
                         'callback' => function($dir) {
                             return is_dir($dir);

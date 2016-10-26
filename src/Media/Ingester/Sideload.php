@@ -3,20 +3,26 @@ namespace FileSideload\Media\Ingester;
 
 use Omeka\Api\Request;
 use Omeka\Entity\Media;
-use Omeka\Media\Ingester\AbstractIngester;
+use Omeka\Media\Ingester\IngesterInterface;
 use Omeka\Stdlib\ErrorStore;
 use Zend\Form\Element\Select;
 use Zend\View\Renderer\PhpRenderer;
 
-class Sideload extends AbstractIngester
+class Sideload implements IngesterInterface
 {
+    protected $services;
+
+    public function __construct($services)
+    {
+        $this->services = $services;
+    }
+
     /**
      * {@inheritDoc}
      */
     public function getLabel()
     {
-        $translator = $this->getServiceLocator()->get('MvcTranslator');
-        return $translator->translate('Sideload');
+        return 'Sideload'; // @translate
     }
 
     /**
@@ -46,27 +52,27 @@ class Sideload extends AbstractIngester
             return;
         }
 
-        if (false) {
+        $tempPath = $this->getDirectory() . '/' . $data['ingest_filename'];
+        if (!is_file($tempPath)) {
             $errorStore->addError('ingest_filename', 'Invalid ingest filename');
             return;
         }
 
-        $file = $this->getServiceLocator()->get('Omeka\File');
+        $fileManager = $this->services->get('Omeka\File\Manager');
+        $file = $fileManager->getTempFile();
+        $file->setTempPath($tempPath);
         $file->setSourceName($data['ingest_filename']);
-        $file->setTempPath($this->getDirectory() . '/' . $data['ingest_filename']);
 
-        $fileManager = $this->getServiceLocator()->get('Omeka\File\Manager');
-        $hasThumbnails = $fileManager->storeThumbnails($file);
-        $media->setHasThumbnails($hasThumbnails);
+        $media->setStorageId($file->getStorageId());
+        $media->setExtension($file->getExtension($fileManager));
+        $media->setMediaType($file->getMediaType());
+        $media->setSha256($file->getSha256());
+        $media->setHasThumbnails($fileManager->storeThumbnails($file));
 
         if (!isset($data['store_original']) || $data['store_original']) {
             $fileManager->storeOriginal($file);
             $media->setHasOriginal(true);
         }
-
-        $media->setFilename($file->getStorageName());
-        $media->setMediaType($file->getMediaType());
-
         if (!array_key_exists('o:source', $data)) {
             $media->setSource($data['ingest_filename']);
         }
@@ -79,10 +85,10 @@ class Sideload extends AbstractIngester
     {
         $select = new Select('o:media[__index__][ingest_filename]');
         $select->setOptions([
-            'label' => $view->translate('File'),
+            'label' => 'File', // @translate
             'value_options' => $this->getFiles(),
-            'empty_option' => 'Select a file to sideload...',
-            'info' => $view->translate('The filename.'),
+            'empty_option' => 'Select a file to sideload...', // @translate
+            'info' => 'The filename.', // @translate
         ]);
         $select->setAttributes([
             'id' => 'media-sideload-ingest-filename-__index__',
@@ -118,7 +124,7 @@ class Sideload extends AbstractIngester
      */
     public function getDirectory()
     {
-        $settings = $this->getServiceLocator()->get('Omeka\Settings');
+        $settings = $this->services->get('Omeka\Settings');
         return $settings->get('file_sideload_directory');
     }
 
