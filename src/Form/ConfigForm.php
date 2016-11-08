@@ -12,7 +12,8 @@ class ConfigForm extends Form
             'name' => 'directory',
             'type' => 'Text',
             'options' => [
-                'label' => 'Sideload Directory', // @translate
+                'label' => 'Sideload directory', // @translate
+                'info' => 'Files to be sideloaded should be added to this directory. The directory can be anywhere on your server and must be owned by the web server.', // @translate
             ],
             'attributes' => [
                 'required' => true,
