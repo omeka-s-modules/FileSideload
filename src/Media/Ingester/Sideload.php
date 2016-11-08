@@ -114,6 +114,7 @@ class Sideload implements IngesterInterface
                 }
             }
         }
+        asort($files);
         return $files;
     }
 
