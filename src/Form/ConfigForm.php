@@ -31,10 +31,11 @@ class ConfigForm extends Form
                     'name' => 'Callback',
                     'options' => [
                         'messages' => [
-                            Callback::INVALID_VALUE => 'The provided directory is not valid', // @translate
+                            Callback::INVALID_VALUE => 'The provided directory is not a directory or does not have sufficient permissions.', // @translate
                         ],
                         'callback' => function($dir) {
-                            return is_dir($dir);
+                            $fileinfo = new \SplFileInfo($dir);
+                            return is_dir($dir) && posix_geteuid() === $fileinfo->getOwner();
                         }
                     ],
                 ],
