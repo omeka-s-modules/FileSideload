@@ -9,14 +9,25 @@ class ConfigForm extends Form
     public function init()
     {
         $this->add([
+            'type' => 'text',
             'name' => 'directory',
-            'type' => 'Text',
             'options' => [
                 'label' => 'Sideload directory', // @translate
-                'info' => 'An absolute path to the directory where files to be sideloaded will be added. The directory can be anywhere on your server and must be owned by the web server.', // @translate
+                'info' => 'Enter an absolute path to the directory where files to be sideloaded will be added. The directory can be anywhere on your server.', // @translate
             ],
             'attributes' => [
                 'required' => true,
+            ],
+        ]);
+        $this->add([
+            'type' => 'checkbox',
+            'name' => 'delete_file',
+            'options' => [
+                'label' => 'Delete sideloaded file?', // @translate
+                'info' => 'Do you want to delete a file in the sideload directory after it has been sideloaded? If so, the directory must be server-writable.', // @translate
+                'use_hidden_element' => true,
+                'checked_value' => 'yes',
+                'unchecked_value' => 'no',
             ],
         ]);
 
@@ -32,15 +43,22 @@ class ConfigForm extends Form
                     'name' => 'Callback',
                     'options' => [
                         'messages' => [
-                            Callback::INVALID_VALUE => 'The provided directory is not a directory or does not have sufficient permissions.', // @translate
+                            Callback::INVALID_VALUE => 'The provided sideload directory is not a directory or does not have sufficient permissions.', // @translate
                         ],
-                        'callback' => function($dir) {
-                            $fileinfo = new \SplFileInfo($dir);
-                            return is_dir($dir) && posix_geteuid() === $fileinfo->getOwner();
-                        }
+                        'callback' => [$this, 'directoryIsValid']
                     ],
                 ],
             ],
         ]);
+    }
+
+    public function directoryIsValid($dir, $context)
+    {
+        $dir = new \SplFileInfo($dir);
+        $valid = $dir->isDir() && $dir->isExecutable() && $dir->isReadable();
+        if (isset($context['delete_file']) && 'yes' === $context['delete_file']) {
+            $valid = $valid && $dir->isWritable();
+        }
+        return $valid;
     }
 }

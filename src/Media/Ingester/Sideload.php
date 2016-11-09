@@ -3,6 +3,7 @@ namespace FileSideload\Media\Ingester;
 
 use Omeka\Api\Request;
 use Omeka\Entity\Media;
+use Omeka\File\File;
 use Omeka\Media\Ingester\IngesterInterface;
 use Omeka\Stdlib\ErrorStore;
 use Zend\Form\Element\Select;
@@ -10,11 +11,19 @@ use Zend\View\Renderer\PhpRenderer;
 
 class Sideload implements IngesterInterface
 {
-    protected $services;
+    protected $fileManager;
+
+    protected $directory;
+
+    protected $deleteFile;
 
     public function __construct($services)
     {
-        $this->services = $services;
+        $this->fileManager = $services->get('Omeka\File\Manager');
+
+        $settings = $services->get('Omeka\Settings');
+        $this->directory = $settings->get('file_sideload_directory');
+        $this->deleteFile = $settings->get('file_sideload_delete_file');
     }
 
     /**
@@ -48,33 +57,38 @@ class Sideload implements IngesterInterface
     ) {
         $data = $request->getContent();
         if (!isset($data['ingest_filename'])) {
-            $errorStore->addError('ingest_filename', 'No ingest filename specified');
+            $errorStore->addError('ingest_filename', 'No ingest filename specified'); // @translate;
             return;
         }
 
-        $tempPath = $this->getDirectory() . '/' . $data['ingest_filename'];
-        if (!is_file($tempPath)) {
-            $errorStore->addError('ingest_filename', 'Invalid ingest filename');
+        $tempPath = sprintf('%s/%s', $this->directory, $data['ingest_filename']);
+        if (!$this->canSideload(new \SplFileInfo($tempPath))) {
+            $errorStore->addError('ingest_filename', sprintf(
+                'Cannot sideload file "%s". File does not exist or does not have sufficient permissions', // @translate
+                $tempPath
+            ));
             return;
         }
 
-        $fileManager = $this->services->get('Omeka\File\Manager');
-        $file = $fileManager->getTempFile();
-        $file->setTempPath($tempPath);
+        $file = new File($tempPath);
         $file->setSourceName($data['ingest_filename']);
 
         $media->setStorageId($file->getStorageId());
-        $media->setExtension($file->getExtension($fileManager));
+        $media->setExtension($file->getExtension($this->fileManager));
         $media->setMediaType($file->getMediaType());
         $media->setSha256($file->getSha256());
-        $media->setHasThumbnails($fileManager->storeThumbnails($file));
+        $media->setHasThumbnails($this->fileManager->storeThumbnails($file));
 
         if (!isset($data['store_original']) || $data['store_original']) {
-            $fileManager->storeOriginal($file);
+            $this->fileManager->storeOriginal($file);
             $media->setHasOriginal(true);
         }
         if (!array_key_exists('o:source', $data)) {
             $media->setSource($data['ingest_filename']);
+        }
+
+        if ('yes' === $this->deleteFile) {
+            $file->delete();
         }
     }
 
@@ -105,12 +119,12 @@ class Sideload implements IngesterInterface
     public function getFiles()
     {
         $files = [];
-        $directory = $this->getDirectory();
-        if (is_dir($directory)) {
-            $iterator = new \DirectoryIterator($directory);
-            foreach ($iterator as $fileinfo) {
-                if ($this->canSideload($fileinfo)) {
-                    $files[$fileinfo->getFilename()] = $fileinfo->getFilename();
+        $dir = new \SplFileInfo($this->directory);
+        if ($dir->isDir()) {
+            $iterator = new \DirectoryIterator($dir);
+            foreach ($iterator as $file) {
+                if ($this->canSideload($file)) {
+                    $files[$file->getFilename()] = $file->getFilename();
                 }
             }
         }
@@ -119,29 +133,17 @@ class Sideload implements IngesterInterface
     }
 
     /**
-     * Get the sideload directory.
-     *
-     * @return string
-     */
-    public function getDirectory()
-    {
-        $settings = $this->services->get('Omeka\Settings');
-        return $settings->get('file_sideload_directory');
-    }
-
-    /**
      * Can a file be sideloaded?
-     *
-     * The file must be a regular file, readable, and owned by the web server
-     * (for LocalStore:put() to sucessfully chmod).
      *
      * @param SplFileInfo $fileinfo
      * @return bool
      */
-    public function canSideload(\SplFileInfo $fileinfo)
+    public function canSideload(\SplFileInfo $file)
     {
-        return $fileinfo->isFile()
-            && $fileinfo->isReadable()
-            && ($fileinfo->getOwner() === posix_geteuid());
+        if ('yes' === $this->deleteFile && !$file->getPathInfo()->isWritable()) {
+            // The parent directory must be server-writable to delete the file.
+            return false;
+        }
+        return $file->isFile() && $file->isReadable();
     }
 }

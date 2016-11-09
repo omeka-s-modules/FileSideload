@@ -21,6 +21,7 @@ class Module extends AbstractModule
     {
         $settings = $serviceLocator->get('Omeka\Settings');
         $settings->delete('file_sideload_directory');
+        $settings->delete('file_sideload_delete_file');
     }
 
     public function attachListeners(SharedEventManagerInterface $sharedEventManager)
@@ -46,7 +47,10 @@ class Module extends AbstractModule
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
         $form = new ConfigForm;
         $form->init();
-        $form->setData(['directory' => $settings->get('file_sideload_directory')]);
+        $form->setData([
+            'directory' => $settings->get('file_sideload_directory'),
+            'delete_file' => $settings->get('file_sideload_delete_file', 'no'),
+        ]);
         return $renderer->formCollection($form, false);
     }
 
@@ -60,10 +64,9 @@ class Module extends AbstractModule
             $controller->messenger()->addErrors($form->getMessages());
             return false;
         }
-        $settings->set(
-            'file_sideload_directory',
-            $form->getData()['directory']
-        );
+        $formData = $form->getData();
+        $settings->set('file_sideload_directory', $formData['directory']);
+        $settings->set('file_sideload_delete_file', $formData['delete_file']);
         return true;
     }
 }
