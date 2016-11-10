@@ -13,7 +13,7 @@ class ConfigForm extends Form
             'name' => 'directory',
             'options' => [
                 'label' => 'Sideload directory', // @translate
-                'info' => 'Enter an absolute path to the directory where files to be sideloaded will be added. The directory can be anywhere on your server.', // @translate
+                'info' => 'Enter the absolute path to the directory where files to be sideloaded will be added. The directory can be anywhere on your server.', // @translate
             ],
             'attributes' => [
                 'required' => true,
@@ -24,7 +24,7 @@ class ConfigForm extends Form
             'name' => 'delete_file',
             'options' => [
                 'label' => 'Delete sideloaded file?', // @translate
-                'info' => 'Do you want to delete a file in the sideload directory after it has been sideloaded? If so, the directory must be server-writable.', // @translate
+                'info' => 'Do you want to delete a file from the sideload directory after it has been sideloaded? If so, the directory must be server-writable.', // @translate
                 'use_hidden_element' => true,
                 'checked_value' => 'yes',
                 'unchecked_value' => 'no',
