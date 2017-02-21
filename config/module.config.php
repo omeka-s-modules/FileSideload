@@ -5,4 +5,7 @@ return [
             'sideload' => 'FileSideload\Service\MediaIngesterSideloadFactory',
         ],
     ],
+    'csv_import_media_ingester_adapter' => [
+        'sideload'   => 'FileSideload\CSVImport\SideloadMediaIngesterAdapter',
+    ],
 ];
