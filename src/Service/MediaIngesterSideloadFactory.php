@@ -9,6 +9,11 @@ class MediaIngesterSideloadFactory implements FactoryInterface
 {
     public function __invoke(ContainerInterface $services, $requestedName, array $options = null)
     {
-        return new Sideload($services);
+        $settings = $services->get('Omeka\Settings');
+        return new Sideload(
+            $settings->get('file_sideload_directory'),
+            $settings->get('file_sideload_delete_file'),
+            $services->get('Omeka\File\TempFileFactory')
+        );
     }
 }

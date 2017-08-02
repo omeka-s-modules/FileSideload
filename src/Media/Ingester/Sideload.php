@@ -11,19 +11,17 @@ use Zend\View\Renderer\PhpRenderer;
 
 class Sideload implements IngesterInterface
 {
-    protected $fileManager;
-
     protected $directory;
 
     protected $deleteFile;
 
-    public function __construct($services)
-    {
-        $this->fileManager = $services->get('Omeka\File\Manager');
+    protected $tempFileFactory;
 
-        $settings = $services->get('Omeka\Settings');
-        $this->directory = $settings->get('file_sideload_directory');
-        $this->deleteFile = $settings->get('file_sideload_delete_file');
+    public function __construct($directory, $deleteFile, $tempFileFactory)
+    {
+        $this->directory = $directory;
+        $this->deleteFile = $deleteFile;
+        $this->tempFileFactory = $tempFileFactory;
     }
 
     /**
@@ -52,9 +50,8 @@ class Sideload implements IngesterInterface
      *
      * {@inheritDoc}
      */
-    public function ingest(Media $media, Request $request,
-        ErrorStore $errorStore
-    ) {
+    public function ingest(Media $media, Request $request, ErrorStore $errorStore)
+    {
         $data = $request->getContent();
         if (!isset($data['ingest_filename'])) {
             $errorStore->addError('ingest_filename', 'No ingest filename specified'); // @translate;
@@ -70,25 +67,25 @@ class Sideload implements IngesterInterface
             return;
         }
 
-        $file = new File($tempPath);
-        $file->setSourceName($data['ingest_filename']);
+        $tempFile = $this->tempFileFactory->build();
+        $tempFile->setTempPath($tempPath);
+        $tempFile->setSourceName($data['ingest_filename']);
 
-        $media->setStorageId($file->getStorageId());
-        $media->setExtension($file->getExtension($this->fileManager));
-        $media->setMediaType($file->getMediaType());
-        $media->setSha256($file->getSha256());
-        $media->setHasThumbnails($this->fileManager->storeThumbnails($file));
-
-        if (!isset($data['store_original']) || $data['store_original']) {
-            $this->fileManager->storeOriginal($file);
-            $media->setHasOriginal(true);
-        }
+        $media->setStorageId($tempFile->getStorageId());
+        $media->setExtension($tempFile->getExtension());
+        $media->setMediaType($tempFile->getMediaType());
+        $media->setSha256($tempFile->getSha256());
+        $hasThumbnails = $tempFile->storeThumbnails();
+        $media->setHasThumbnails($hasThumbnails);
         if (!array_key_exists('o:source', $data)) {
             $media->setSource($data['ingest_filename']);
         }
-
+        if (!isset($data['store_original']) || $data['store_original']) {
+            $tempFile->storeOriginal();
+            $media->setHasOriginal(true);
+        }
         if ('yes' === $this->deleteFile) {
-            $file->delete();
+            $tempFile->delete();
         }
     }
 
