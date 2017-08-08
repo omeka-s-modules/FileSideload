@@ -32,7 +32,7 @@ class Module extends AbstractModule
             'Omeka\Media\Ingester\Manager',
             'service.registered_names',
             function (Event $event) {
-                $manager = $this->getServiceLocator()->get('Omeka\MediaIngesterManager');
+                $manager = $this->getServiceLocator()->get('Omeka\Media\Ingester\Manager');
                 $names = $event->getParam('registered_names');
                 if (!$manager->get('sideload')->getFiles()) {
                     unset($names[array_search('sideload', $names)]);
