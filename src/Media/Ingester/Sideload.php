@@ -59,7 +59,11 @@ class Sideload implements IngesterInterface
             return;
         }
 
-        $fileinfo = new \SplFileInfo($this->directory . '/' . $data['ingest_filename']);
+        $isAbsolutePathInsideDir = $this->directory && strpos($data['ingest_filename'], $this->directory) === 0;
+        $tempPath = $isAbsolutePathInsideDir
+            ? $data['ingest_filename']
+            : $this->directory . DIRECTORY_SEPARATOR . $data['ingest_filename'];
+        $fileinfo = new \SplFileInfo($tempPath);
         $tempPath = $this->verifyFile($fileinfo);
         if (false === $tempPath) {
             $errorStore->addError('ingest_filename', sprintf(
