@@ -19,7 +19,8 @@ class Sideload implements IngesterInterface
 
     public function __construct($directory, $deleteFile, $tempFileFactory)
     {
-        $this->directory = $directory;
+        // Only work on the resolved real directory path.
+        $this->directory = realpath($directory);
         $this->deleteFile = $deleteFile;
         $this->tempFileFactory = $tempFileFactory;
     }
@@ -58,8 +59,9 @@ class Sideload implements IngesterInterface
             return;
         }
 
-        $tempPath = sprintf('%s/%s', $this->directory, $data['ingest_filename']);
-        if (!$this->canSideload(new \SplFileInfo($tempPath))) {
+        $fileinfo = new \SplFileInfo($this->directory . '/' . $data['ingest_filename']);
+        $tempPath = $this->verifyFile($fileinfo);
+        if (false === $tempPath) {
             $errorStore->addError('ingest_filename', sprintf(
                 'Cannot sideload file "%s". File does not exist or does not have sufficient permissions', // @translate
                 $tempPath
@@ -120,7 +122,7 @@ class Sideload implements IngesterInterface
         if ($dir->isDir()) {
             $iterator = new \DirectoryIterator($dir);
             foreach ($iterator as $file) {
-                if ($this->canSideload($file)) {
+                if ($this->verifyFile($file)) {
                     $files[$file->getFilename()] = $file->getFilename();
                 }
             }
@@ -130,17 +132,35 @@ class Sideload implements IngesterInterface
     }
 
     /**
-     * Can a file be sideloaded?
+     * Verify the passed file.
+     *
+     * Working off the "real" base directory and "real" filepath: both must
+     * exist and have sufficient permissions; the filepath must begin with the
+     * base directory path to avoid problems with symlinks; the base directory
+     * must be server-writable to delete the file; and the file must be a
+     * readable regular file.
      *
      * @param SplFileInfo $fileinfo
-     * @return bool
+     * @return string|false The real file path or false if the file is invalid
      */
-    public function canSideload(\SplFileInfo $file)
+    public function verifyFile(\SplFileInfo $fileinfo)
     {
-        if ('yes' === $this->deleteFile && !$file->getPathInfo()->isWritable()) {
-            // The parent directory must be server-writable to delete the file.
+        if (false === $this->directory) {
             return false;
         }
-        return $file->isFile() && $file->isReadable();
+        $realPath = $fileinfo->getRealPath();
+        if (false === $realPath) {
+            return false;
+        }
+        if (0 !== strpos($realPath, $this->directory)) {
+            return false;
+        }
+        if ('yes' === $this->deleteFile && !$fileinfo->getPathInfo()->isWritable()) {
+            return false;
+        }
+        if (!$fileinfo->isFile() || !$fileinfo->isReadable()) {
+            return false;
+        }
+        return $realPath;
     }
 }
