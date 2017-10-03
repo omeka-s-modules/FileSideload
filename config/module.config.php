@@ -1,21 +1,23 @@
 <?php
+namespace FileSideload;
+
 return [
     'media_ingesters' => [
         'factories' => [
-            'sideload' => 'FileSideload\Service\MediaIngesterSideloadFactory',
+            'sideload' => Service\MediaIngesterSideloadFactory::class,
         ],
     ],
     'translator' => [
         'translation_file_patterns' => [
             [
                 'type' => 'gettext',
-                'base_dir' => OMEKA_PATH . '/modules/FileSideload/language',
+                'base_dir' => __DIR__ . '/../language',
                 'pattern' => '%s.mo',
                 'text_domain' => null,
             ],
         ],
     ],
     'csv_import_media_ingester_adapter' => [
-        'sideload'   => 'FileSideload\CSVImport\SideloadMediaIngesterAdapter',
+        'sideload' => CSVImport\SideloadMediaIngesterAdapter::class,
     ],
 ];
