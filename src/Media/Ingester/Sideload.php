@@ -60,15 +60,15 @@ class Sideload implements IngesterInterface
         }
 
         $isAbsolutePathInsideDir = $this->directory && strpos($data['ingest_filename'], $this->directory) === 0;
-        $tempPath = $isAbsolutePathInsideDir
+        $filepath = $isAbsolutePathInsideDir
             ? $data['ingest_filename']
             : $this->directory . DIRECTORY_SEPARATOR . $data['ingest_filename'];
-        $fileinfo = new \SplFileInfo($tempPath);
+        $fileinfo = new \SplFileInfo($filepath);
         $tempPath = $this->verifyFile($fileinfo);
         if (false === $tempPath) {
             $errorStore->addError('ingest_filename', sprintf(
                 'Cannot sideload file "%s". File does not exist or does not have sufficient permissions', // @translate
-                $tempPath
+                $filepath
             ));
             return;
         }
