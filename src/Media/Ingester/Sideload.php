@@ -100,16 +100,21 @@ class Sideload implements IngesterInterface
      */
     public function form(PhpRenderer $view, array $options = [])
     {
+        $files = $this->getFiles();
+        $isEmpty = empty($files);
+
         $select = new Select('o:media[__index__][ingest_filename]');
         $select->setOptions([
             'label' => 'File', // @translate
-            'value_options' => $this->getFiles(),
-            'empty_option' => 'Select a file to sideload...', // @translate
+            'value_options' => $files,
+            'empty_option' => $isEmpty
+                ? 'No file: add files in the directory or check its path' // @translate
+                : 'Select a file to sideload...', // @translate
             'info' => 'The filename.', // @translate
         ]);
         $select->setAttributes([
             'id' => 'media-sideload-ingest-filename-__index__',
-            'required' => true
+            'required' => true,
         ]);
         return $view->formRow($select);
     }
