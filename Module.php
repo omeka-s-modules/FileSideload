@@ -2,10 +2,7 @@
 namespace FileSideload;
 
 use FileSideload\Form\ConfigForm;
-use FileSideload\Media\Ingester\Sideload;
 use Omeka\Module\AbstractModule;
-use Zend\EventManager\Event;
-use Zend\EventManager\SharedEventManagerInterface;
 use Zend\Mvc\Controller\AbstractController;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\View\Renderer\PhpRenderer;
@@ -22,24 +19,6 @@ class Module extends AbstractModule
         $settings = $serviceLocator->get('Omeka\Settings');
         $settings->delete('file_sideload_directory');
         $settings->delete('file_sideload_delete_file');
-    }
-
-    public function attachListeners(SharedEventManagerInterface $sharedEventManager)
-    {
-        // Remove sideload ingester from list of registered ingesters if there
-        // are no available files to sideload.
-        $sharedEventManager->attach(
-            'Omeka\Media\Ingester\Manager',
-            'service.registered_names',
-            function (Event $event) {
-                $manager = $this->getServiceLocator()->get('Omeka\Media\Ingester\Manager');
-                $names = $event->getParam('registered_names');
-                if (!$manager->get('sideload')->getFiles()) {
-                    unset($names[array_search('sideload', $names)]);
-                }
-                $event->setParam('registered_names', $names);
-            }
-        );
     }
 
     public function getConfigForm(PhpRenderer $renderer)
@@ -70,4 +49,3 @@ class Module extends AbstractModule
         return true;
     }
 }
-
