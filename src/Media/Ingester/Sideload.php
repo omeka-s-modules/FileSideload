@@ -3,7 +3,6 @@ namespace FileSideload\Media\Ingester;
 
 use Omeka\Api\Request;
 use Omeka\Entity\Media;
-use Omeka\File\File;
 use Omeka\Media\Ingester\IngesterInterface;
 use Omeka\Stdlib\ErrorStore;
 use Zend\Form\Element\Select;
@@ -25,17 +24,11 @@ class Sideload implements IngesterInterface
         $this->tempFileFactory = $tempFileFactory;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getLabel()
     {
         return 'Sideload'; // @translate
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getRenderer()
     {
         return 'file';
@@ -95,9 +88,6 @@ class Sideload implements IngesterInterface
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function form(PhpRenderer $view, array $options = [])
     {
         $files = $this->getFiles();
@@ -149,7 +139,7 @@ class Sideload implements IngesterInterface
      * must be server-writable to delete the file; and the file must be a
      * readable regular file.
      *
-     * @param SplFileInfo $fileinfo
+     * @param \SplFileInfo $fileinfo
      * @return string|false The real file path or false if the file is invalid
      */
     public function verifyFile(\SplFileInfo $fileinfo)
