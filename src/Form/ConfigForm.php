@@ -17,6 +17,7 @@ class ConfigForm extends Form
             ],
             'attributes' => [
                 'required' => true,
+                'id' => 'directory',
             ],
         ]);
         $this->add([
@@ -28,6 +29,9 @@ class ConfigForm extends Form
                 'use_hidden_element' => true,
                 'checked_value' => 'yes',
                 'unchecked_value' => 'no',
+            ],
+            'attributes' => [
+                'id' => 'delete-file',
             ],
         ]);
 
