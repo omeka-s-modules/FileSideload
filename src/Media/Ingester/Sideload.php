@@ -100,7 +100,7 @@ class Sideload implements IngesterInterface
             'value_options' => $files,
             'empty_option' => $isEmpty
                 ? 'No file: add files in the directory or check its path' // @translate
-                : 'Select a file to sideload...', // @translate
+                : 'Select a file to sideload…', // @translate
             'info' => 'The filename.', // @translate
         ]);
         $select->setAttributes([
