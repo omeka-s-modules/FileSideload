@@ -17,7 +17,9 @@ return [
             ],
         ],
     ],
-    'csv_import_media_ingester_adapter' => [
-        'sideload' => CSVImport\SideloadMediaIngesterAdapter::class,
+    'csv_import' => [
+        'media_ingester_adapter' => [
+            'sideload' => CSVImport\SideloadMediaIngesterAdapter::class,
+        ],
     ],
 ];
