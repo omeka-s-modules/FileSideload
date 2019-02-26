@@ -13,7 +13,8 @@ class MediaIngesterSideloadFactory implements FactoryInterface
         return new Sideload(
             $settings->get('file_sideload_directory'),
             $settings->get('file_sideload_delete_file'),
-            $services->get('Omeka\File\TempFileFactory')
+            $services->get('Omeka\File\TempFileFactory'),
+            $services->get('Omeka\File\Validator')
         );
     }
 }

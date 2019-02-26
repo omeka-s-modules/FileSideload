@@ -3,6 +3,7 @@ namespace FileSideload\Media\Ingester;
 
 use Omeka\Api\Request;
 use Omeka\Entity\Media;
+use Omeka\File\Validator;
 use Omeka\Media\Ingester\IngesterInterface;
 use Omeka\Stdlib\ErrorStore;
 use Zend\Form\Element\Select;
@@ -16,12 +17,15 @@ class Sideload implements IngesterInterface
 
     protected $tempFileFactory;
 
-    public function __construct($directory, $deleteFile, $tempFileFactory)
+    protected $validator;
+
+    public function __construct($directory, $deleteFile, $tempFileFactory, Validator $validator)
     {
         // Only work on the resolved real directory path.
         $this->directory = realpath($directory);
         $this->deleteFile = $deleteFile;
         $this->tempFileFactory = $tempFileFactory;
+        $this->validator = $validator;
     }
 
     public function getLabel()
@@ -69,6 +73,9 @@ class Sideload implements IngesterInterface
         $tempFile = $this->tempFileFactory->build();
         $tempFile->setTempPath($tempPath);
         $tempFile->setSourceName($data['ingest_filename']);
+        if (!$this->validator->validate($tempFile, $errorStore)) {
+            return;
+        }
 
         $media->setStorageId($tempFile->getStorageId());
         $media->setExtension($tempFile->getExtension());
