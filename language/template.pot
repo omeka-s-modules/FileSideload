@@ -5,30 +5,34 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/Media/Ingester/Sideload.php:32
+#: src/Media/Ingester/Sideload.php:33
 msgid "Sideload"
 msgstr ""
 
-#: src/Media/Ingester/Sideload.php:57
+#: src/Media/Ingester/Sideload.php:55
 msgid "No ingest filename specified"
 msgstr ""
 
-#: src/Media/Ingester/Sideload.php:64
+#: src/Media/Ingester/Sideload.php:67
 #, php-format
 msgid ""
 "Cannot sideload file \"%s\". File does not exist or does not have sufficient "
 "permissions"
 msgstr ""
 
-#: src/Media/Ingester/Sideload.php:99
+#: src/Media/Ingester/Sideload.php:94
 msgid "File"
 msgstr ""
 
-#: src/Media/Ingester/Sideload.php:101
+#: src/Media/Ingester/Sideload.php:97
+msgid "No file: add files in the directory or check its path"
+msgstr ""
+
+#: src/Media/Ingester/Sideload.php:98
 msgid "Select a file to sideload..."
 msgstr ""
 
-#: src/Media/Ingester/Sideload.php:102
+#: src/Media/Ingester/Sideload.php:99
 msgid "The filename."
 msgstr ""
 
@@ -42,17 +46,17 @@ msgid ""
 "be added. The directory can be anywhere on your server."
 msgstr ""
 
-#: src/Form/ConfigForm.php:26
+#: src/Form/ConfigForm.php:27
 msgid "Delete sideloaded file?"
 msgstr ""
 
-#: src/Form/ConfigForm.php:27
+#: src/Form/ConfigForm.php:28
 msgid ""
 "Do you want to delete a file from the sideload directory after it has been "
 "sideloaded? If so, the directory must be server-writable."
 msgstr ""
 
-#: src/Form/ConfigForm.php:46
+#: src/Form/ConfigForm.php:50
 msgid ""
 "The provided sideload directory is not a directory or does not have "
 "sufficient permissions."
