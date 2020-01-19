@@ -4,6 +4,10 @@ namespace FileSideload;
 use Osii\Service\MediaIngesterMapper\MediaIngesterMapperFactory;
 
 return [
+    'service_manager' => [
+        // Override the default local store in order to hard-link files if possible, else copy them as usual.
+        'Omeka\File\Store\Local' => Service\File\Store\LocalFactory::class,
+    ],
     'media_ingesters' => [
         'factories' => [
             'sideload' => Service\MediaIngesterSideloadFactory::class,
