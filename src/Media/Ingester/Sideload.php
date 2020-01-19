@@ -128,13 +128,15 @@ class Sideload implements IngesterInterface
         $tempPath = $tempFile->getTempPath();
         $copy = $this->modeCopy;
         if ($this->modeHardlink) {
+            // Unlike copy, link does not override existing file.
+            @unlink($tempPath);
             $result = @link($realPath, $tempPath);
             if ($result) {
                 $copy = false;
             } elseif (!$copy) {
                 if ($errorStore) {
                     $message = new Message(
-                        'Error when hard-linking source "%s". Check if it can be hard-linked to the Omeka directory of original files.', // @translate
+                        'Error when hard-linking source "%s". Check if it can be hard-linked to the Omeka directory of original files and to the temp directory.', // @translate
                         $tempFile->getSourceName()
                     );
                     $errorStore->addError('file', $message);

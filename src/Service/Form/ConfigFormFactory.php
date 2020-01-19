@@ -13,8 +13,11 @@ class ConfigFormFactory implements FactoryInterface
         $basePath = $config['file_store']['local']['base_path'] ?: OMEKA_PATH . '/files';
         $originalFilesPath = $basePath . '/original';
 
+        $tempDirPath = $config['temp_dir'];
+
         $form = new ConfigForm(null, $options);
         return $form
-            ->setOriginalFilesPath($originalFilesPath);
+            ->setOriginalFilesPath($originalFilesPath)
+            ->setTempDirPath($tempDirPath);
     }
 }

@@ -12,6 +12,11 @@ class ConfigForm extends Form
      */
     protected $originalFilesPath;
 
+    /**
+     * @var string
+     */
+    protected $tempDirPath;
+
     public function init()
     {
         $this->add([
@@ -72,7 +77,7 @@ class ConfigForm extends Form
                     'hardlink_copy' => 'Hard link (or copy if unsupported)', // @translate
                     'hardlink' => 'Hard link (or fail if unsupported)', // @translate
                 ],
-                'info' => 'Hard-link a file is quicker and more space efficient if supported by the server.', // @translate
+                'info' => 'Hard-link a file is quicker and more space efficient if supported by the server. The option "temp_dir" in "config/local.config.php" may be used in some cases.', // @translate
                 // TODO Give a link to the documentation to explain hard-link and how to check devices.
                 'use_hidden_element' => true,
             ],
@@ -108,7 +113,7 @@ class ConfigForm extends Form
                     'name' => 'Callback',
                     'options' => [
                         'messages' => [
-                            Callback::INVALID_VALUE => 'Hard-linking between the provided directory and the Omeka files/original directory is not supported. See readme for more informations.', // @translate
+                            Callback::INVALID_VALUE => 'Hard-linking between the provided directory and the Omeka files/original directory, through the temp directory, is not supported. See readme for more informations.', // @translate
                         ],
                         'callback' => [$this, 'supportHardlink'],
                     ],
@@ -171,6 +176,28 @@ class ConfigForm extends Form
         }
 
         @unlink($destinationFilepath);
+
+        // Furthermore, a check should be done with the Omeka temp dir.
+        $tempPath = $this->getTempDirPath();
+        $destinationTempPath = $tempPath . '/test_hardlink.txt';
+
+        if (!$sourceExists) {
+            $result = file_put_contents($sourceFilepath, sprintf('Test hard-linking from "%s" to "%s".', $sourceFilepath, $destinationFilepath));
+            if ($result === false) {
+                return false;
+            }
+        }
+
+        $result = @link($sourceFilepath, $destinationTempPath);
+        if (!$sourceExists) {
+            @unlink($sourceFilepath);
+        }
+
+        if (!$result) {
+            return false;
+        }
+
+        @unlink($destinationTempPath);
         return true;
     }
 
@@ -183,5 +210,16 @@ class ConfigForm extends Form
     public function getOriginalFilesPath()
     {
         return $this->originalFilesPath;
+    }
+
+    public function setTempDirPath($tempDirPath)
+    {
+        $this->tempDirPath = $tempDirPath;
+        return $this;
+    }
+
+    public function getTempDirPath()
+    {
+        return $this->tempDirPath;
     }
 }
