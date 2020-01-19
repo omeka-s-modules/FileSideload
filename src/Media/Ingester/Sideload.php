@@ -148,12 +148,27 @@ class Sideload implements IngesterInterface
                 if ($this->verifyFile($file)) {
                     // For security, don't display the full path to the user.
                     $relativePath = substr($filepath, $lengthDir);
-                    $files[$relativePath] = $relativePath;
+                    // Use keys for quicker process on big directories.
+                    $files[$relativePath] = null;
                 }
             }
         }
-        asort($files);
-        return $files;
+
+        // Don't mix directories and files, but list directories first as usual.
+        $alphabeticAndDirFirst = function($a, $b) {
+            if ($a === $b) {
+                return 0;
+            }
+            $aInRoot = strpos($a, '/') === false;
+            $bInRoot = strpos($b, '/') === false;
+            if (($aInRoot && $bInRoot) || (!$aInRoot && !$bInRoot)) {
+                return strcasecmp($a, $b);
+            }
+            return $bInRoot ? -1 : 1;
+        };
+        uksort($files, $alphabeticAndDirFirst);
+
+        return array_combine(array_keys($files), array_keys($files));
     }
 
     /**
