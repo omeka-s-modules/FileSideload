@@ -18,7 +18,7 @@ class Sideload implements IngesterInterface
     protected $directory;
 
     /**
-     * @var string
+     * @var bool
      */
     protected $deleteFile;
 
@@ -34,7 +34,7 @@ class Sideload implements IngesterInterface
 
     /**
      * @param string $directory
-     * @param string $deleteFile
+     * @param bool $deleteFile
      * @param TempFileFactory $tempFileFactory
      * @param Validator $validator
      */
@@ -99,8 +99,7 @@ class Sideload implements IngesterInterface
             $media->setSource($data['ingest_filename']);
         }
         $storeOriginal = (!isset($data['store_original']) || $data['store_original']);
-        $deleteTempFile = ('yes' === $this->deleteFile);
-        $tempFile->mediaIngestFile($media, $request, $errorStore, $storeOriginal, true, $deleteTempFile, true);
+        $tempFile->mediaIngestFile($media, $request, $errorStore, $storeOriginal, true, $this->deleteFile, true);
     }
 
     public function form(PhpRenderer $view, array $options = [])
@@ -169,7 +168,7 @@ class Sideload implements IngesterInterface
         if (0 !== strpos($realPath, $this->directory)) {
             return false;
         }
-        if ('yes' === $this->deleteFile && !$fileinfo->getPathInfo()->isWritable()) {
+        if ($this->deleteFile && !$fileinfo->getPathInfo()->isWritable()) {
             return false;
         }
         if (!$fileinfo->isFile() || !$fileinfo->isReadable()) {
