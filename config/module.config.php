@@ -10,6 +10,11 @@ return [
             'sideload_dir' => Service\MediaIngesterSideloadDirFactory::class,
         ],
     ],
+    'form_elements' => [
+        'factories' => [
+            Form\ConfigForm::class => Service\Form\ConfigFormFactory::class,
+        ],
+    ],
     'translator' => [
         'translation_file_patterns' => [
             [

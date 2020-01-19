@@ -24,6 +24,7 @@ class Module extends AbstractModule
         $settings->delete('file_sideload_delete_file');
         $settings->delete('file_sideload_max_files');
         $settings->delete('file_sideload_max_directories');
+        $settings->delete('file_sideload_mode');
     }
 
     public function attachListeners(SharedEventManagerInterface $sharedEventManager): void
@@ -37,33 +38,39 @@ class Module extends AbstractModule
 
     public function getConfigForm(PhpRenderer $renderer)
     {
-        $settings = $this->getServiceLocator()->get('Omeka\Settings');
-        $form = new ConfigForm;
+        $services = $this->getServiceLocator();
+        $settings = $services->get('Omeka\Settings');
+        $form = $services->get('FormElementManager')->get(ConfigForm::class);
         $form->init();
         $form->setData([
             'directory' => $settings->get('file_sideload_directory'),
             'delete_file' => $settings->get('file_sideload_delete_file', 'no'),
             'filesideload_max_files' => $settings->get('file_sideload_max_files', 1000),
             'filesideload_max_directories' => $settings->get('file_sideload_max_directories', 1000),
+            'filesideload_mode' => $settings->get('file_sideload_mode', 'copy'),
         ]);
+
         return $renderer->formCollection($form, false);
     }
 
     public function handleConfigForm(AbstractController $controller)
     {
-        $settings = $this->getServiceLocator()->get('Omeka\Settings');
-        $form = new ConfigForm;
+        $services = $this->getServiceLocator();
+        $settings = $services->get('Omeka\Settings');
+        $form = $services->get('FormElementManager')->get(ConfigForm::class);
         $form->init();
         $form->setData($controller->params()->fromPost());
         if (!$form->isValid()) {
             $controller->messenger()->addErrors($form->getMessages());
             return false;
         }
+
         $formData = $form->getData();
         $settings->set('file_sideload_directory', $formData['directory']);
         $settings->set('file_sideload_delete_file', $formData['delete_file']);
         $settings->set('file_sideload_max_files', (int) $formData['filesideload_max_files']);
         $settings->set('file_sideload_max_directories', (int) $formData['filesideload_max_directories']);
+        $settings->set('file_sideload_mode', $formData['filesideload_mode']);
         return true;
     }
 
