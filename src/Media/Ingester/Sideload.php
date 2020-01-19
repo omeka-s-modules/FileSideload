@@ -3,6 +3,7 @@ namespace FileSideload\Media\Ingester;
 
 use Omeka\Api\Request;
 use Omeka\Entity\Media;
+use Omeka\File\TempFileFactory;
 use Omeka\File\Validator;
 use Omeka\Media\Ingester\IngesterInterface;
 use Omeka\Stdlib\ErrorStore;
@@ -11,15 +12,33 @@ use Zend\View\Renderer\PhpRenderer;
 
 class Sideload implements IngesterInterface
 {
+    /**
+     * @var string
+     */
     protected $directory;
 
+    /**
+     * @var string
+     */
     protected $deleteFile;
 
+    /**
+     * @var TempFileFactory
+     */
     protected $tempFileFactory;
 
+    /**
+     * @var Validator
+     */
     protected $validator;
 
-    public function __construct($directory, $deleteFile, $tempFileFactory, Validator $validator)
+    /**
+     * @param string $directory
+     * @param string $deleteFile
+     * @param TempFileFactory $tempFileFactory
+     * @param Validator $validator
+     */
+    public function __construct($directory, $deleteFile, TempFileFactory $tempFileFactory, Validator $validator)
     {
         // Only work on the resolved real directory path.
         $this->directory = realpath($directory);
@@ -95,7 +114,7 @@ class Sideload implements IngesterInterface
             'value_options' => $files,
             'empty_option' => $isEmpty
                 ? 'No file: add files in the directory or check its path' // @translate
-                : 'Select a file to sideload...', // @translate
+                : 'Select a file to sideload…', // @translate
             'info' => 'The filename.', // @translate
         ]);
         $select->setAttributes([
