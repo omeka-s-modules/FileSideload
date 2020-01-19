@@ -80,8 +80,8 @@ class Sideload implements IngesterInterface
             ? $data['ingest_filename']
             : $this->directory . DIRECTORY_SEPARATOR . $data['ingest_filename'];
         $fileinfo = new \SplFileInfo($filepath);
-        $tempPath = $this->verifyFile($fileinfo);
-        if (false === $tempPath) {
+        $realPath = $this->verifyFile($fileinfo);
+        if (false === $realPath) {
             $errorStore->addError('ingest_filename', sprintf(
                 'Cannot sideload file "%s". File does not exist or does not have sufficient permissions', // @translate
                 $filepath
@@ -90,16 +90,24 @@ class Sideload implements IngesterInterface
         }
 
         $tempFile = $this->tempFileFactory->build();
-        $tempFile->setTempPath($tempPath);
         $tempFile->setSourceName($data['ingest_filename']);
+
+        // Copy the file to a temp path, so it is managed as a real temp file (#14).
+        copy($realPath, $tempFile->getTempPath());
+
         if (!$this->validator->validate($tempFile, $errorStore)) {
             return;
         }
+
         if (!array_key_exists('o:source', $data)) {
             $media->setSource($data['ingest_filename']);
         }
         $storeOriginal = (!isset($data['store_original']) || $data['store_original']);
-        $tempFile->mediaIngestFile($media, $request, $errorStore, $storeOriginal, true, $this->deleteFile, true);
+        $tempFile->mediaIngestFile($media, $request, $errorStore, $storeOriginal, true, true, true);
+
+        if ($this->deleteFile) {
+            unlink($realPath);
+        }
     }
 
     public function form(PhpRenderer $view, array $options = [])
