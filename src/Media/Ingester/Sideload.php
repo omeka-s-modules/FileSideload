@@ -126,23 +126,33 @@ class Sideload implements IngesterInterface
 
         // Copy the file to a temp path, so it is managed as a real temp file (#14).
         $tempPath = $tempFile->getTempPath();
+        $copy = $this->modeCopy;
         if ($this->modeHardlink) {
             $result = @link($realPath, $tempPath);
-            if (!$result) {
-                if (!$this->modeCopy) {
-                    if ($errorStore) {
-                        $message = new Message(
-                            'Error when hard-linking source "%s". Check if it can be hard-linked to the Omeka directory of original files.', // @translate
-                            $tempFile->getSourceName(),
-                        );
-                        $errorStore->addError('file', $message);
-                    }
-                    return;
+            if ($result) {
+                $copy = false;
+            } elseif (!$copy) {
+                if ($errorStore) {
+                    $message = new Message(
+                        'Error when hard-linking source "%s". Check if it can be hard-linked to the Omeka directory of original files.', // @translate
+                        $tempFile->getSourceName()
+                    );
+                    $errorStore->addError('file', $message);
                 }
-                copy($realPath, $tempPath);
+                return;
             }
-        } else {
-            copy($realPath, $tempPath);
+        }
+
+        if ($copy) {
+            $result = copy($realPath, $tempPath);
+            if (!$result) {
+                $message = new Message(
+                    'Error when copying source "%s". Check paths, rights, and disk space.', // @translate
+                    $tempFile->getSourceName()
+                );
+                $errorStore->addError('file', $message);
+                return;
+            }
         }
 
         if (!$this->validator->validate($tempFile, $errorStore)) {
