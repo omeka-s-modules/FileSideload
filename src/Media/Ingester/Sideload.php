@@ -141,10 +141,14 @@ class Sideload implements IngesterInterface
         $files = [];
         $dir = new \SplFileInfo($this->directory);
         if ($dir->isDir()) {
-            $iterator = new \DirectoryIterator($dir);
-            foreach ($iterator as $file) {
+            $lengthDir = strlen($this->directory) + 1;
+            $dir = new \RecursiveDirectoryIterator($this->directory);
+            $iterator = new \RecursiveIteratorIterator($dir);
+            foreach ($iterator as $filepath => $file) {
                 if ($this->verifyFile($file)) {
-                    $files[$file->getFilename()] = $file->getFilename();
+                    // For security, don't display the full path to the user.
+                    $relativePath = substr($filepath, $lengthDir);
+                    $files[$relativePath] = $relativePath;
                 }
             }
         }
