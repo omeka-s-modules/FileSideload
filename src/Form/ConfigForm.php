@@ -17,6 +17,11 @@ class ConfigForm extends Form
      */
     protected $tempDirPath;
 
+    /**
+     * @var bool
+     */
+    protected $useLocalHardLinkStore;
+
     public function init()
     {
         $this->add([
@@ -45,6 +50,7 @@ class ConfigForm extends Form
                 'id' => 'delete-file',
             ],
         ]);
+
         $this->add([
             'type' => 'number',
             'name' => 'filesideload_max_files',
@@ -67,16 +73,31 @@ class ConfigForm extends Form
                 'min' => 0,
             ],
         ]);
+
+        $modes = [
+            'copy' => [
+                'value' => 'copy',
+                'label' => 'Copy', // @translate
+            ],
+            'hardlink_copy' => [
+                'value' => 'hardlink_copy',
+                'label' => 'Hard link (or copy if unsupported)', // @translate
+            ],
+            'hardlink' => [
+                'value' => 'hardlink',
+                'label' => 'Hard link (or fail if unsupported)', // @translate
+            ],
+        ];
+        if (!$this->getUseLocalHardLinkStore()) {
+            $modes['hardlink_copy']['disabled'] = true;
+            $modes['hardlink']['disabled'] = true;
+        }
         $this->add([
             'type' => Element\Radio::class,
             'name' => 'filesideload_mode',
             'options' => [
                 'label' => 'Import mode', // @translate
-                'value_options' => [
-                    'copy' => 'Copy', // @translate
-                    'hardlink_copy' => 'Hard link (or copy if unsupported)', // @translate
-                    'hardlink' => 'Hard link (or fail if unsupported)', // @translate
-                ],
+                'value_options' => $modes,
                 'info' => 'Hard-link a file is quicker and more space efficient if supported by the server. The option "temp_dir" in "config/local.config.php" may be used in some cases.', // @translate
                 // TODO Give a link to the documentation to explain hard-link and how to check devices.
                 'use_hidden_element' => true,
@@ -141,6 +162,10 @@ class ConfigForm extends Form
 
         $directory = $context['directory'];
         if (!$directory || !$this->directoryIsValid($directory, $context)) {
+            return false;
+        }
+
+        if (!$this->getUseLocalHardLinkStore()) {
             return false;
         }
 
@@ -221,5 +246,16 @@ class ConfigForm extends Form
     public function getTempDirPath()
     {
         return $this->tempDirPath;
+    }
+
+    public function setUseLocalHardLinkStore($useLocalHardLinkStore)
+    {
+        $this->useLocalHardLinkStore = $useLocalHardLinkStore;
+        return $this;
+    }
+
+    public function getUseLocalHardLinkStore()
+    {
+        return $this->useLocalHardLinkStore;
     }
 }

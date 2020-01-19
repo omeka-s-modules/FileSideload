@@ -15,9 +15,13 @@ class ConfigFormFactory implements FactoryInterface
 
         $tempDirPath = $config['temp_dir'];
 
+        $fileStore = $services->get('Omeka\File\Store');
+        $useLocalHardLinkStore = $fileStore instanceof \FileSideload\File\Store\LocalHardLink;
+
         $form = new ConfigForm(null, $options);
         return $form
             ->setOriginalFilesPath($originalFilesPath)
-            ->setTempDirPath($tempDirPath);
+            ->setTempDirPath($tempDirPath)
+            ->setUseLocalHardLinkStore($useLocalHardLinkStore);
     }
 }
