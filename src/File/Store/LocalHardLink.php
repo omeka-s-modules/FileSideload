@@ -3,7 +3,7 @@ namespace FileSideload\File\Store;
 
 use Omeka\File\Exception;
 
-class Local extends \Omeka\File\Store\Local
+class LocalHardLink extends \Omeka\File\Store\Local
 {
     /**
      * Override the default local store in order to hard-link files if possible,
