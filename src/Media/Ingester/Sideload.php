@@ -3,6 +3,7 @@ namespace FileSideload\Media\Ingester;
 
 use Omeka\Api\Request;
 use Omeka\Entity\Media;
+use Omeka\File\TempFileFactory;
 use Omeka\File\Validator;
 use Omeka\Media\Ingester\IngesterInterface;
 use Omeka\Stdlib\ErrorStore;
@@ -11,15 +12,33 @@ use Zend\View\Renderer\PhpRenderer;
 
 class Sideload implements IngesterInterface
 {
+    /**
+     * @var string
+     */
     protected $directory;
 
+    /**
+     * @var bool
+     */
     protected $deleteFile;
 
+    /**
+     * @var TempFileFactory
+     */
     protected $tempFileFactory;
 
+    /**
+     * @var Validator
+     */
     protected $validator;
 
-    public function __construct($directory, $deleteFile, $tempFileFactory, Validator $validator)
+    /**
+     * @param string $directory
+     * @param bool $deleteFile
+     * @param TempFileFactory $tempFileFactory
+     * @param Validator $validator
+     */
+    public function __construct($directory, $deleteFile, TempFileFactory $tempFileFactory, Validator $validator)
     {
         // Only work on the resolved real directory path.
         $this->directory = realpath($directory);
@@ -61,8 +80,8 @@ class Sideload implements IngesterInterface
             ? $data['ingest_filename']
             : $this->directory . DIRECTORY_SEPARATOR . $data['ingest_filename'];
         $fileinfo = new \SplFileInfo($filepath);
-        $tempPath = $this->verifyFile($fileinfo);
-        if (false === $tempPath) {
+        $realPath = $this->verifyFile($fileinfo);
+        if (false === $realPath) {
             $errorStore->addError('ingest_filename', sprintf(
                 'Cannot sideload file "%s". File does not exist or does not have sufficient permissions', // @translate
                 $filepath
@@ -71,17 +90,24 @@ class Sideload implements IngesterInterface
         }
 
         $tempFile = $this->tempFileFactory->build();
-        $tempFile->setTempPath($tempPath);
         $tempFile->setSourceName($data['ingest_filename']);
+
+        // Copy the file to a temp path, so it is managed as a real temp file (#14).
+        copy($realPath, $tempFile->getTempPath());
+
         if (!$this->validator->validate($tempFile, $errorStore)) {
             return;
         }
+
         if (!array_key_exists('o:source', $data)) {
             $media->setSource($data['ingest_filename']);
         }
         $storeOriginal = (!isset($data['store_original']) || $data['store_original']);
-        $deleteTempFile = ('yes' === $this->deleteFile);
-        $tempFile->mediaIngestFile($media, $request, $errorStore, $storeOriginal, true, $deleteTempFile, true);
+        $tempFile->mediaIngestFile($media, $request, $errorStore, $storeOriginal, true, true, true);
+
+        if ($this->deleteFile) {
+            unlink($realPath);
+        }
     }
 
     public function form(PhpRenderer $view, array $options = [])
@@ -95,7 +121,7 @@ class Sideload implements IngesterInterface
             'value_options' => $files,
             'empty_option' => $isEmpty
                 ? 'No file: add files in the directory or check its path' // @translate
-                : 'Select a file to sideload...', // @translate
+                : 'Select a file to sideload…', // @translate
             'info' => 'The filename.', // @translate
         ]);
         $select->setAttributes([
@@ -150,7 +176,7 @@ class Sideload implements IngesterInterface
         if (0 !== strpos($realPath, $this->directory)) {
             return false;
         }
-        if ('yes' === $this->deleteFile && !$fileinfo->getPathInfo()->isWritable()) {
+        if ($this->deleteFile && !$fileinfo->getPathInfo()->isWritable()) {
             return false;
         }
         if (!$fileinfo->isFile() || !$fileinfo->isReadable()) {
