@@ -2,32 +2,42 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
+# 
+# Translators:
+# Tommaso Vitale, 2019
+# Giorgio Comai <g@giorgiocomai.eu>, 2019
+# 
 #, fuzzy
 msgid ""
 msgstr ""
+"Last-Translator: Giorgio Comai <g@giorgiocomai.eu>, 2019\n"
+"Language-Team: Italian (https://www.transifex.com/omeka/teams/14184/it/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: src/Media/Ingester/Sideload.php:52
 msgid "Sideload"
-msgstr ""
+msgstr "Sideload"
 
 #: src/Media/Ingester/Sideload.php:74
 msgid "No ingest filename specified"
-msgstr ""
+msgstr "Nessun nome di file per ingestione specificato"
 
 #: src/Media/Ingester/Sideload.php:86
 #, php-format
 msgid ""
-"Cannot sideload file \"%s\". File does not exist or does not have sufficient "
-"permissions"
+"Cannot sideload file \"%s\". File does not exist or does not have sufficient"
+" permissions"
 msgstr ""
+"Non si può sideload file \"%s\". Il file non esiste o non ha sufficente "
+"autorizzazione"
 
 #: src/Media/Ingester/Sideload.php:123
 msgid "No file: add files in the directory or check its path"
-msgstr ""
+msgstr "Nessun file: aggiungi file nella cartella o verifica il percorso"
 
 #: src/Media/Ingester/Sideload.php:124
 msgid "Select a file to sideload…"
@@ -35,30 +45,37 @@ msgstr ""
 
 #: src/Media/Ingester/Sideload.php:125
 msgid "The filename."
-msgstr ""
+msgstr "Il nome del file."
 
 #: src/Form/ConfigForm.php:15
 msgid "Sideload directory"
-msgstr ""
+msgstr "Sideload directory"
 
 #: src/Form/ConfigForm.php:16
 msgid ""
 "Enter the absolute path to the directory where files to be sideloaded will "
 "be added. The directory can be anywhere on your server."
 msgstr ""
+"Inserisci il percorso assoluto alla cartella dove verranno aggiunti i file "
+"per essere caricati. La cartella si può trovare ovunque sul tuo server."
 
 #: src/Form/ConfigForm.php:27
 msgid "Delete sideloaded file?"
-msgstr ""
+msgstr "Cancellare il file sideloaded?"
 
 #: src/Form/ConfigForm.php:28
 msgid ""
 "Do you want to delete a file from the sideload directory after it has been "
 "sideloaded? If so, the directory must be server-writable."
 msgstr ""
+"Vuoi eliminare i file dalla cartella di caricamento dopo che i file sono "
+"stati importati? In questo caso, devono esserci i diritti di scrittura sulla"
+" cartella da parte del server"
 
 #: src/Form/ConfigForm.php:50
 msgid ""
 "The provided sideload directory is not a directory or does not have "
 "sufficient permissions."
 msgstr ""
+"La cartella di caricamento indicata non è una cartella o non vi sono "
+"permessi sufficienti per leggerla "

@@ -2,28 +2,37 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
+# 
+# Translators:
+# Darío Hereñú, 2019
+# 
 #, fuzzy
 msgid ""
 msgstr ""
+"Last-Translator: Darío Hereñú, 2019\n"
+"Language-Team: Spanish (https://www.transifex.com/omeka/teams/14184/es/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: es\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: src/Media/Ingester/Sideload.php:52
 msgid "Sideload"
-msgstr ""
+msgstr "Transferencia"
 
 #: src/Media/Ingester/Sideload.php:74
 msgid "No ingest filename specified"
-msgstr ""
+msgstr "Sin nombre de archivo especificado"
 
 #: src/Media/Ingester/Sideload.php:86
 #, php-format
 msgid ""
-"Cannot sideload file \"%s\". File does not exist or does not have sufficient "
-"permissions"
+"Cannot sideload file \"%s\". File does not exist or does not have sufficient"
+" permissions"
 msgstr ""
+"No se puede transferir el archivo \"%s\". El archivo no existe o no posee "
+"suficientes permisos."
 
 #: src/Media/Ingester/Sideload.php:123
 msgid "No file: add files in the directory or check its path"
@@ -35,30 +44,37 @@ msgstr ""
 
 #: src/Media/Ingester/Sideload.php:125
 msgid "The filename."
-msgstr ""
+msgstr "El nombre de archivo."
 
 #: src/Form/ConfigForm.php:15
 msgid "Sideload directory"
-msgstr ""
+msgstr "Directorio de transferencia"
 
 #: src/Form/ConfigForm.php:16
 msgid ""
 "Enter the absolute path to the directory where files to be sideloaded will "
 "be added. The directory can be anywhere on your server."
 msgstr ""
+"Ingrese la ruta absoluta al directorio donde se transferirán los archivos. "
+"El directorio puede estar en cualquier lugar de su servidor."
 
 #: src/Form/ConfigForm.php:27
 msgid "Delete sideloaded file?"
-msgstr ""
+msgstr "¿Eliminar archivo transferido?"
 
 #: src/Form/ConfigForm.php:28
 msgid ""
 "Do you want to delete a file from the sideload directory after it has been "
 "sideloaded? If so, the directory must be server-writable."
 msgstr ""
+"¿Desea eliminar el archivo del directorio de transferencia una vez que ha "
+"sido transferido? Si es así, el directorio debe poseer atributos de "
+"escritura en el servidor."
 
 #: src/Form/ConfigForm.php:50
 msgid ""
 "The provided sideload directory is not a directory or does not have "
 "sufficient permissions."
 msgstr ""
+"El directorio de transferencia suministrado no es un directorio o no posee "
+"suficientes permisos."
