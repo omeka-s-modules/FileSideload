@@ -141,15 +141,34 @@ class Sideload implements IngesterInterface
         $files = [];
         $dir = new \SplFileInfo($this->directory);
         if ($dir->isDir()) {
-            $iterator = new \DirectoryIterator($dir);
-            foreach ($iterator as $file) {
+            $lengthDir = strlen($this->directory) + 1;
+            $dir = new \RecursiveDirectoryIterator($this->directory);
+            $iterator = new \RecursiveIteratorIterator($dir);
+            foreach ($iterator as $filepath => $file) {
                 if ($this->verifyFile($file)) {
-                    $files[$file->getFilename()] = $file->getFilename();
+                    // For security, don't display the full path to the user.
+                    $relativePath = substr($filepath, $lengthDir);
+                    // Use keys for quicker process on big directories.
+                    $files[$relativePath] = null;
                 }
             }
         }
-        asort($files);
-        return $files;
+
+        // Don't mix directories and files, but list directories first as usual.
+        $alphabeticAndDirFirst = function($a, $b) {
+            if ($a === $b) {
+                return 0;
+            }
+            $aInRoot = strpos($a, '/') === false;
+            $bInRoot = strpos($b, '/') === false;
+            if (($aInRoot && $bInRoot) || (!$aInRoot && !$bInRoot)) {
+                return strcasecmp($a, $b);
+            }
+            return $bInRoot ? -1 : 1;
+        };
+        uksort($files, $alphabeticAndDirFirst);
+
+        return array_combine(array_keys($files), array_keys($files));
     }
 
     /**
