@@ -3,9 +3,9 @@ namespace FileSideload;
 
 use FileSideload\Form\ConfigForm;
 use Omeka\Module\AbstractModule;
-use Zend\Mvc\Controller\AbstractController;
-use Zend\ServiceManager\ServiceLocatorInterface;
-use Zend\View\Renderer\PhpRenderer;
+use Laminas\Mvc\Controller\AbstractController;
+use Laminas\ServiceManager\ServiceLocatorInterface;
+use Laminas\View\Renderer\PhpRenderer;
 
 class Module extends AbstractModule
 {
@@ -44,6 +44,7 @@ class Module extends AbstractModule
             return false;
         }
         $formData = $form->getData();
+        var_dump($formData); die();
         $settings->set('file_sideload_directory', $formData['directory']);
         $settings->set('file_sideload_delete_file', $formData['delete_file']);
         return true;

@@ -1,8 +1,8 @@
 <?php
 namespace FileSideload\Form;
 
-use Zend\Form\Form;
-use Zend\Validator\Callback;
+use Laminas\Form\Form;
+use Laminas\Validator\Callback;
 
 class ConfigForm extends Form
 {
