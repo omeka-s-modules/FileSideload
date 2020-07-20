@@ -44,7 +44,6 @@ class Module extends AbstractModule
             return false;
         }
         $formData = $form->getData();
-        var_dump($formData); die();
         $settings->set('file_sideload_directory', $formData['directory']);
         $settings->set('file_sideload_delete_file', $formData['delete_file']);
         return true;
