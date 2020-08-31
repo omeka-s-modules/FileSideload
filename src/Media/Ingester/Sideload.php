@@ -143,6 +143,14 @@ class Sideload implements IngesterInterface
         if ($dir->isDir()) {
             $lengthDir = strlen($this->directory) + 1;
             $dir = new \RecursiveDirectoryIterator($this->directory);
+            // Prevent UnexpectedValueException "Permission denied" by excluding
+            // directories that are not executable or readable.
+            $dir = new \RecursiveCallbackFilterIterator($dir, function ($current, $key, $iterator) {
+                if ($iterator->isDir() && (!$iterator->isExecutable() || !$iterator->isReadable())) {
+                    return false;
+                }
+                return true;
+            });
             $iterator = new \RecursiveIteratorIterator($dir);
             foreach ($iterator as $filepath => $file) {
                 if ($this->verifyFile($file)) {
