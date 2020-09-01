@@ -5,12 +5,12 @@
 # 
 # Translators:
 # Tommaso Vitale, 2019
-# Giorgio Comai <g@giorgiocomai.eu>, 2019
+# Giorgio Comai <g@giorgiocomai.eu>, 2020
 # 
 #, fuzzy
 msgid ""
 msgstr ""
-"Last-Translator: Giorgio Comai <g@giorgiocomai.eu>, 2019\n"
+"Last-Translator: Giorgio Comai <g@giorgiocomai.eu>, 2020\n"
 "Language-Team: Italian (https://www.transifex.com/omeka/teams/14184/it/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -41,7 +41,7 @@ msgstr "Nessun file: aggiungi file nella cartella o verifica il percorso"
 
 #: src/Media/Ingester/Sideload.php:124
 msgid "Select a file to sideload…"
-msgstr ""
+msgstr "Seleziona il file per il sideload"
 
 #: src/Media/Ingester/Sideload.php:125
 msgid "The filename."
