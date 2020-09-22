@@ -3,7 +3,7 @@ namespace FileSideload\Service;
 
 use FileSideload\Media\Ingester\Sideload;
 use Interop\Container\ContainerInterface;
-use Zend\ServiceManager\Factory\FactoryInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
 
 class MediaIngesterSideloadFactory implements FactoryInterface
 {
@@ -13,6 +13,7 @@ class MediaIngesterSideloadFactory implements FactoryInterface
         return new Sideload(
             $settings->get('file_sideload_directory'),
             $settings->get('file_sideload_delete_file') === 'yes',
+            $settings->get('file_sideload_mode'),
             $services->get('Omeka\File\TempFileFactory'),
             $services->get('Omeka\File\Validator')
         );

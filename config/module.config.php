@@ -2,9 +2,19 @@
 namespace FileSideload;
 
 return [
+    'service_manager' => [
+        'factories' => [
+            File\Store\LocalHardLink::class => Service\File\Store\LocalHardLinkFactory::class,
+        ],
+    ],
     'media_ingesters' => [
         'factories' => [
             'sideload' => Service\MediaIngesterSideloadFactory::class,
+        ],
+    ],
+    'form_elements' => [
+        'factories' => [
+            Form\ConfigForm::class => Service\Form\ConfigFormFactory::class,
         ],
     ],
     'translator' => [
