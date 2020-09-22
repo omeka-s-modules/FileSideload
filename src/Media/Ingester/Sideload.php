@@ -7,8 +7,8 @@ use Omeka\File\TempFileFactory;
 use Omeka\File\Validator;
 use Omeka\Media\Ingester\IngesterInterface;
 use Omeka\Stdlib\ErrorStore;
-use Zend\Form\Element\Select;
-use Zend\View\Renderer\PhpRenderer;
+use Laminas\Form\Element\Select;
+use Laminas\View\Renderer\PhpRenderer;
 
 class Sideload implements IngesterInterface
 {

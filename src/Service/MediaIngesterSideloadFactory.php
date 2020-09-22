@@ -3,7 +3,7 @@ namespace FileSideload\Service;
 
 use FileSideload\Media\Ingester\Sideload;
 use Interop\Container\ContainerInterface;
-use Zend\ServiceManager\Factory\FactoryInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
 
 class MediaIngesterSideloadFactory implements FactoryInterface
 {
