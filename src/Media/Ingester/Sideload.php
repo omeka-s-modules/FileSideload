@@ -163,7 +163,7 @@ class Sideload implements IngesterInterface
         }
 
         // Don't mix directories and files, but list directories first as usual.
-        $alphabeticAndDirFirst = function($a, $b) {
+        $alphabeticAndDirFirst = function ($a, $b) {
             if ($a === $b) {
                 return 0;
             }
