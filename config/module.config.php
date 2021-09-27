@@ -5,6 +5,7 @@ return [
     'media_ingesters' => [
         'factories' => [
             'sideload' => Service\MediaIngesterSideloadFactory::class,
+            'sideload_dir' => Service\MediaIngesterSideloadDirFactory::class,
         ],
     ],
     'translator' => [
