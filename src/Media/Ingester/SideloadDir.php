@@ -9,7 +9,7 @@ use Omeka\File\Validator;
 use Omeka\Media\Ingester\IngesterInterface;
 use Omeka\Stdlib\ErrorStore;
 use Omeka\Stdlib\Message;
-use Laminas\Form\Element\Select;
+use Laminas\Form\Element;
 use Laminas\View\Renderer\PhpRenderer;
 
 /**
@@ -90,6 +90,7 @@ class SideloadDir implements IngesterInterface
      * Accepts the following non-prefixed keys:
      * - ingest_folder: (required) The source folder where the file to ingest is.
      * - ingest_filename: (required) The filename to ingest.
+     * - ingest_folder_recursively: (optional, default false) Ingest folder recursively?
      * - store_original: (optional, default true) Store the original file?
      *
      * {@inheritDoc}
@@ -119,7 +120,7 @@ class SideloadDir implements IngesterInterface
 
         // The check is done against the folder, but the file is relative to the
         // main directory.
-        $isAbsolutePathInsideDir = strpos($data['ingest_filename'], $realIngestFolder) === 0;
+        $isAbsolutePathInsideDir = strpos((string) $data['ingest_filename'], $realIngestFolder) === 0;
         $filepath = $isAbsolutePathInsideDir
             ? $data['ingest_filename']
             : $this->directory . DIRECTORY_SEPARATOR . $data['ingest_filename'];
@@ -128,9 +129,18 @@ class SideloadDir implements IngesterInterface
         if (is_null($realPath)) {
             $errorStore->addError('ingest_filename', new Message(
                 'Cannot sideload file "%s". File does not exist or is not inside main folder or does not have sufficient permissions', // @translate
-                $filepath
+                $data['ingest_filename']
             ));
             return;
+        }
+
+        // When recursive is not set, check if the file is a root file.
+        if (empty($data['ingest_folder_recursively']) && pathinfo($realPath, PATHINFO_DIRNAME) !== $realIngestFolder) {
+            $errorStore->addError('ingest_filename', new Message(
+                'Cannot sideload file "%s": ingestion of folder "%s" is not set recursive', // @translate
+                $data['ingest_filename'],
+                $data['ingest_folder']
+            ));
         }
 
         // Processing ingestion.
@@ -177,7 +187,7 @@ class SideloadDir implements IngesterInterface
             $emptyOptionDir = 'Select a folder to sideload all files inside…'; // @translate
         }
 
-        $select = new Select('o:media[__index__][ingest_folder]');
+        $select = new Element\Select('o:media[__index__][ingest_folder]');
         $select
             ->setOptions([
                 'label' => 'Folder', // @translate
@@ -190,7 +200,18 @@ class SideloadDir implements IngesterInterface
                 'required' => true,
             ]);
 
-        return $view->formRow($select);
+        $recursive = new Element\Checkbox('o:media[__index__][ingest_folder_recursively]');
+        $recursive
+            ->setOptions([
+                'label' => 'Ingest folder recursively', // @translate
+            ])
+            ->setAttributes([
+                'id' => 'media-sideload-ingest-folder-recursive-__index__',
+                'required' => false,
+            ]);
+
+        return $view->formRow($select)
+            . $view->formRow($recursive);
     }
 
     /**

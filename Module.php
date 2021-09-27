@@ -161,7 +161,7 @@ class Module extends AbstractModule
                 continue;
             }
 
-            $listFiles = $this->listFiles($folder);
+            $listFiles = $this->listFiles($folder, !empty($dataMedia['ingest_folder_recursively']));
             if (!count($listFiles)) {
                 $errorStore->addError('ingest_folder', new Message(
                     'Ingest folder "%s" is empty.',  // @translate
@@ -187,7 +187,7 @@ class Module extends AbstractModule
      *
      * @return array List of filepaths relative to the main directory.
      */
-    protected function listFiles(string $directory): array
+    protected function listFiles(string $directory, bool $recursive = false): array
     {
         $dir = new \SplFileInfo($directory);
         if (!$dir->isDir() || !$dir->isReadable() || !$dir->isExecutable()) {
@@ -203,23 +203,37 @@ class Module extends AbstractModule
         $listFiles = [];
 
         $lengthDir = strlen($this->directory) + 1;
-        $dir = new \RecursiveDirectoryIterator($directory);
-        // Prevent UnexpectedValueException "Permission denied" by excluding
-        // directories that are not executable or readable.
-        $dir = new \RecursiveCallbackFilterIterator($dir, function ($current, $key, $iterator) {
-            if ($iterator->isDir() && (!$iterator->isExecutable() || !$iterator->isReadable())) {
-                return false;
+        if ($recursive) {
+            $dir = new \RecursiveDirectoryIterator($directory);
+            // Prevent UnexpectedValueException "Permission denied" by excluding
+            // directories that are not executable or readable.
+            $dir = new \RecursiveCallbackFilterIterator($dir, function ($current, $key, $iterator) {
+                if ($iterator->isDir() && (!$iterator->isExecutable() || !$iterator->isReadable())) {
+                    return false;
+                }
+                return true;
+            });
+            $iterator = new \RecursiveIteratorIterator($dir);
+            /** @var \SplFileInfo $file */
+            foreach ($iterator as $filepath => $file) {
+                if ($this->verifyFileOrDir($file)) {
+                    // For security, don't display the full path to the user.
+                    $relativePath = substr($filepath, $lengthDir);
+                    // Use keys for quicker process on big directories.
+                    $listFiles[$relativePath] = null;
+                }
             }
-            return true;
-        });
-        $iterator = new \RecursiveIteratorIterator($dir);
-        /** @var \SplFileInfo $file */
-        foreach ($iterator as $filepath => $file) {
-            if ($this->verifyFileOrDir($file)) {
-                // For security, don't display the full path to the user.
-                $relativePath = substr($filepath, $lengthDir);
-                // Use keys for quicker process on big directories.
-                $listFiles[$relativePath] = null;
+        } else {
+            $iterator = new \DirectoryIterator($dir);
+            /** @var \DirectoryIterator $file */
+            foreach ($iterator as $file) {
+                $filepath = $this->verifyFileOrDir($file);
+                if (!is_null($filepath)) {
+                    // For security, don't display the full path to the user.
+                    $relativePath = substr($filepath, $lengthDir);
+                    // Use keys for quicker process on big directories.
+                    $listFiles[$relativePath] = null;
+                }
             }
         }
 
