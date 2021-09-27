@@ -225,14 +225,18 @@ class SideloadDir implements IngesterInterface
                 if (!$this->hasMoreDirs && $this->verifyFileOrDir($file, true)) {
                     // There are two filepaths for one dirpath: "." and "..".
                     $filepath = $file->getRealPath();
-                    // For security, don't display the full path to the user.
-                    $relativePath = substr($filepath, $lengthDir);
-                    if (!isset($this->listDirs[$relativePath])) {
-                        // Use keys for quicker process on big directories.
-                        $this->listDirs[$relativePath] = null;
-                        if ($this->maxFiles && ++$countDirs >= $this->maxFiles) {
-                            $this->hasMoreDirs = true;
-                            break;
+                    // Don't list empty directories.
+                    // TODO Add the count of files for display.
+                    if (!$this->dirHasNoFileAndIsRemovable($filepath)) {
+                        // For security, don't display the full path to the user.
+                        $relativePath = substr($filepath, $lengthDir);
+                        if (!isset($this->listDirs[$relativePath])) {
+                            // Use keys for quicker process on big directories.
+                            $this->listDirs[$relativePath] = null;
+                            if ($this->maxFiles && ++$countDirs >= $this->maxFiles) {
+                                $this->hasMoreDirs = true;
+                                break;
+                            }
                         }
                     }
                 }
