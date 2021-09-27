@@ -19,6 +19,7 @@ class Module extends AbstractModule
         $settings = $serviceLocator->get('Omeka\Settings');
         $settings->delete('file_sideload_directory');
         $settings->delete('file_sideload_delete_file');
+        $settings->delete('file_sideload_max_files');
     }
 
     public function getConfigForm(PhpRenderer $renderer)
@@ -29,6 +30,7 @@ class Module extends AbstractModule
         $form->setData([
             'directory' => $settings->get('file_sideload_directory'),
             'delete_file' => $settings->get('file_sideload_delete_file', 'no'),
+            'filesideload_max_files' => $settings->get('file_sideload_max_files', 1000),
         ]);
         return $renderer->formCollection($form, false);
     }
@@ -46,6 +48,7 @@ class Module extends AbstractModule
         $formData = $form->getData();
         $settings->set('file_sideload_directory', $formData['directory']);
         $settings->set('file_sideload_delete_file', $formData['delete_file']);
+        $settings->set('file_sideload_max_files', (int) $formData['filesideload_max_files']);
         return true;
     }
 }

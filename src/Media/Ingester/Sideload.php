@@ -23,6 +23,11 @@ class Sideload implements IngesterInterface
     protected $deleteFile;
 
     /**
+     * @var int
+     */
+    protected $maxFiles;
+
+    /**
      * @var TempFileFactory
      */
     protected $tempFileFactory;
@@ -35,14 +40,21 @@ class Sideload implements IngesterInterface
     /**
      * @param string $directory
      * @param bool $deleteFile
+     * @param int $maxFiles
      * @param TempFileFactory $tempFileFactory
      * @param Validator $validator
      */
-    public function __construct($directory, $deleteFile, TempFileFactory $tempFileFactory, Validator $validator)
-    {
+    public function __construct(
+        $directory,
+        $deleteFile,
+        $maxFiles,
+        TempFileFactory $tempFileFactory,
+        Validator $validator
+    ) {
         // Only work on the resolved real directory path.
         $this->directory = realpath($directory);
         $this->deleteFile = $deleteFile;
+        $this->maxFiles = $maxFiles;
         $this->tempFileFactory = $tempFileFactory;
         $this->validator = $validator;
     }
@@ -139,6 +151,7 @@ class Sideload implements IngesterInterface
     public function getFiles()
     {
         $files = [];
+        $count = 0;
         $dir = new \SplFileInfo($this->directory);
         if ($dir->isDir()) {
             $lengthDir = strlen($this->directory) + 1;
@@ -158,6 +171,9 @@ class Sideload implements IngesterInterface
                     $relativePath = substr($filepath, $lengthDir);
                     // Use keys for quicker process on big directories.
                     $files[$relativePath] = null;
+                    if ($this->maxFiles && ++$count >= $this->maxFiles) {
+                        break;
+                    }
                 }
             }
         }
