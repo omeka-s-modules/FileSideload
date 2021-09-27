@@ -38,6 +38,11 @@ class Sideload implements IngesterInterface
     protected $validator;
 
     /**
+     * @var bool
+     */
+    protected $hasMoreFiles = false;
+
+    /**
      * @param string $directory
      * @param bool $deleteFile
      * @param int $maxFiles
@@ -127,14 +132,19 @@ class Sideload implements IngesterInterface
         $files = $this->getFiles();
         $isEmpty = empty($files);
 
+        if ($isEmpty) {
+            $emptyOption = 'No file: add files in the directory or check its path'; // @translate
+        } elseif ($this->hasMoreFiles) {
+            $emptyOption = 'Select a file to sideload… (only first ones are listed)'; // @translate
+        } else {
+            $emptyOption = 'Select a file to sideload…'; // @translate
+        }
+
         $select = new Select('o:media[__index__][ingest_filename]');
         $select->setOptions([
             'label' => 'File', // @translate
             'value_options' => $files,
-            'empty_option' => $isEmpty
-                ? 'No file: add files in the directory or check its path' // @translate
-                : 'Select a file to sideload…', // @translate
-            'info' => 'The filename.', // @translate
+            'empty_option' => $emptyOption,
         ]);
         $select->setAttributes([
             'id' => 'media-sideload-ingest-filename-__index__',
@@ -172,6 +182,7 @@ class Sideload implements IngesterInterface
                     // Use keys for quicker process on big directories.
                     $files[$relativePath] = null;
                     if ($this->maxFiles && ++$count >= $this->maxFiles) {
+                        $this->hasMoreFiles = true;
                         break;
                     }
                 }
