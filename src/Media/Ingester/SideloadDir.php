@@ -264,25 +264,9 @@ class SideloadDir implements IngesterInterface
             }
         }
 
-        // Don't mix directories and files, but list directories first as usual.
-        $alphabeticAndDirFirst = function ($a, $b) {
-            // Numeric array keys are number.
-            $a = (string) $a;
-            $b = (string) $b;
-            if ($a === $b) {
-                return 0;
-            }
-            $aInRoot = strpos($a, '/') === false;
-            $bInRoot = strpos($b, '/') === false;
-            if (($aInRoot && $bInRoot) || (!$aInRoot && !$bInRoot)) {
-                return strcasecmp($a, $b);
-            }
-            return $bInRoot ? -1 : 1;
-        };
-
-        uksort($this->listDirs, $alphabeticAndDirFirst);
-
-        $this->listDirs = array_combine(array_keys($this->listDirs), array_keys($this->listDirs));
+        $this->listDirs = array_keys($this->listDirs);
+        natcasesort($this->listDirs);
+        $this->listDirs = array_combine($this->listDirs, $this->listDirs);
     }
 
     /**

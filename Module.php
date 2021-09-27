@@ -202,6 +202,9 @@ class Module extends AbstractModule
 
         $listFiles = [];
 
+        // To simplify sort.
+        $listRootFiles = [];
+
         $lengthDir = strlen($this->directory) + 1;
         if ($recursive) {
             $dir = new \RecursiveDirectoryIterator($directory);
@@ -221,6 +224,9 @@ class Module extends AbstractModule
                     $relativePath = substr($filepath, $lengthDir);
                     // Use keys for quicker process on big directories.
                     $listFiles[$relativePath] = null;
+                    if (pathinfo($filepath, PATHINFO_DIRNAME) === $directory) {
+                        $listRootFiles[$relativePath] = null;
+                    }
                 }
             }
         } else {
@@ -237,25 +243,12 @@ class Module extends AbstractModule
             }
         }
 
-        // Don't mix directories and files, but list directories first as usual.
-        $alphabeticAndDirFirst = function ($a, $b) {
-            // Numeric array keys are number.
-            $a = (string) $a;
-            $b = (string) $b;
-            if ($a === $b) {
-                return 0;
-            }
-            $aInRoot = strpos($a, '/') === false;
-            $bInRoot = strpos($b, '/') === false;
-            if (($aInRoot && $bInRoot) || (!$aInRoot && !$bInRoot)) {
-                return strcasecmp($a, $b);
-            }
-            return $bInRoot ? -1 : 1;
-        };
-
-        uksort($listFiles, $alphabeticAndDirFirst);
-
-        return array_keys($listFiles);
+        // Don't mix directories and files. List root files, then sub-folders.
+        $listFiles = array_keys($listFiles);
+        natcasesort($listFiles);
+        $listRootFiles = array_keys($listRootFiles);
+        natcasesort($listRootFiles);
+        return array_values(array_unique(array_merge($listRootFiles, $listFiles)));
     }
 
     /**
