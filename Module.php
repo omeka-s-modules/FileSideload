@@ -141,10 +141,23 @@ class Module extends AbstractModule
             $folder = $this->verifyFileOrDir($fileinfo, true);
 
             if (is_null($folder)) {
-                $errorStore->addError('ingest_folder', new Message(
-                    'Invalid ingest folder "%s" specified: incorrect path or insufficient permissions', // @translate
-                    $ingestFolder
-                ));
+                // Set a clearer message in some cases.
+                if ($this->deleteFile && !$fileinfo->getPathInfo()->isWritable()) {
+                    $errorStore->addError('ingest_folder', new Message(
+                        'Ingest folder "%s" is not writeable but the config requires deletion after upload.', // @translate
+                        $ingestFolder
+                    ));
+                } elseif (!$fileinfo->isDir()) {
+                    $errorStore->addError('ingest_folder', new Message(
+                        'Invalid ingest folder "%s" specified: not a directory', // @translate
+                        $ingestFolder
+                    ));
+                } else {
+                    $errorStore->addError('ingest_folder', new Message(
+                        'Invalid ingest folder "%s" specified: incorrect path or insufficient permissions', // @translate
+                        $ingestFolder
+                    ));
+                }
                 continue;
             }
 

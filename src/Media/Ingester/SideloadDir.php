@@ -107,8 +107,8 @@ class SideloadDir implements IngesterInterface
         }
 
         // This is the checked full real path inside the main directory.
-        $ingestFolder = $this->checkIngestDir((string) $data['ingest_folder'], $errorStore);
-        if (is_null($ingestFolder)) {
+        $realIngestFolder = $this->checkIngestDir((string) $data['ingest_folder'], $errorStore);
+        if (is_null($realIngestFolder)) {
             return;
         }
 
@@ -119,7 +119,7 @@ class SideloadDir implements IngesterInterface
 
         // The check is done against the folder, but the file is relative to the
         // main directory.
-        $isAbsolutePathInsideDir = strpos($data['ingest_filename'], $ingestFolder) === 0;
+        $isAbsolutePathInsideDir = strpos($data['ingest_filename'], $realIngestFolder) === 0;
         $filepath = $isAbsolutePathInsideDir
             ? $data['ingest_filename']
             : $this->directory . DIRECTORY_SEPARATOR . $data['ingest_filename'];
@@ -151,9 +151,17 @@ class SideloadDir implements IngesterInterface
         $storeOriginal = (!isset($data['store_original']) || $data['store_original']);
         $tempFile->mediaIngestFile($media, $request, $errorStore, $storeOriginal, true, true, true);
 
-        if ($this->deleteFile) {
-            unlink($realPath);
+        if (!$this->deleteFile) {
+            return;
         }
+        unlink($realPath);
+
+        // Check if this is the last file of the ingest folder.
+        if (!$this->dirHasNoFileAndIsRemovable($realIngestFolder)) {
+            return;
+        }
+        // The ingest folder may have empty folders, so recursive remove it.
+        $this->rrmdir($realIngestFolder);
     }
 
     public function form(PhpRenderer $view, array $options = [])
@@ -173,6 +181,7 @@ class SideloadDir implements IngesterInterface
         $select
             ->setOptions([
                 'label' => 'Folder', // @translate
+                'info' => 'Folders and files without sufficient permissions are skipped.', // @translate
                 'value_options' => $this->listDirs,
                 'empty_option' => $emptyOptionDir,
             ])
@@ -316,13 +325,76 @@ class SideloadDir implements IngesterInterface
         $fileinfo = new \SplFileInfo($folder);
         $folder = $this->verifyFileOrDir($fileinfo, true);
         if (is_null($folder)) {
-            $errorStore->addError('ingest_folder', new Message(
-                'Invalid ingest folder "%s" specified: incorrect path or insufficient permissions', // @translate
-                $directory
-            ));
+            // Set a clearer message in some cases.
+            if ($this->deleteFile && !$fileinfo->getPathInfo()->isWritable()) {
+                $errorStore->addError('ingest_folder', new Message(
+                    'Ingest folder "%s" is not writeable but the config requires deletion after upload.', // @translate
+                    $directory
+                ));
+            } elseif (!$fileinfo->isDir()) {
+                $errorStore->addError('ingest_folder', new Message(
+                    'Invalid ingest folder "%s" specified: not a directory', // @translate
+                    $directory
+                ));
+            } else {
+                $errorStore->addError('ingest_folder', new Message(
+                    'Invalid ingest folder "%s" specified: incorrect path or insufficient permissions', // @translate
+                    $directory
+                ));
+            }
             return null;
         }
 
         return $folder;
+    }
+
+    /**
+     * Check if a directory, that is valid, contains files or unwriteable content, recursively.
+     *
+     * The directory should be already checked.
+     */
+    private function dirHasNoFileAndIsRemovable(string $dir): bool
+    {
+        /** @var \SplFileInfo $fileinfo */
+        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir)) as $fileinfo) {
+            if (!$fileinfo->isDir()) {
+                return false;
+            }
+            if (!$fileinfo->isExecutable() || !$fileinfo->isReadable() || !$fileinfo->isWritable()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Removes directories recursively and any files inside them.
+     */
+    private function rrmdir(string $dir): bool
+    {
+        if (!file_exists($dir)
+            || !is_dir($dir)
+            || !is_readable($dir)
+            || !is_writeable($dir)
+        ) {
+            return false;
+        }
+
+        $scandir = scandir($dir);
+        if (!is_array($scandir)) {
+            return false;
+        }
+
+        $files = array_diff($scandir, ['.', '..']);
+        foreach ($files as $file) {
+            $path = $dir . '/' . $file;
+            if (is_dir($path)) {
+                $this->rrmdir($path);
+            } else {
+                @unlink($path);
+            }
+        }
+
+        return @rmdir($dir);
     }
 }
