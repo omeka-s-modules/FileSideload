@@ -23,11 +23,6 @@ class Sideload implements IngesterInterface
     protected $deleteFile;
 
     /**
-     * @var int
-     */
-    protected $maxFiles;
-
-    /**
      * @var TempFileFactory
      */
     protected $tempFileFactory;
@@ -38,6 +33,11 @@ class Sideload implements IngesterInterface
     protected $validator;
 
     /**
+     * @var int
+     */
+    protected $maxFiles;
+
+    /**
      * @var bool
      */
     protected $hasMoreFiles = false;
@@ -45,23 +45,23 @@ class Sideload implements IngesterInterface
     /**
      * @param string $directory
      * @param bool $deleteFile
-     * @param int $maxFiles
      * @param TempFileFactory $tempFileFactory
      * @param Validator $validator
+     * @param int $maxFiles
      */
     public function __construct(
         $directory,
         $deleteFile,
-        $maxFiles,
         TempFileFactory $tempFileFactory,
-        Validator $validator
+        Validator $validator,
+        $maxFiles
     ) {
         // Only work on the resolved real directory path.
         $this->directory = realpath($directory);
         $this->deleteFile = $deleteFile;
-        $this->maxFiles = $maxFiles;
         $this->tempFileFactory = $tempFileFactory;
         $this->validator = $validator;
+        $this->maxFiles = $maxFiles;
     }
 
     public function getLabel()
