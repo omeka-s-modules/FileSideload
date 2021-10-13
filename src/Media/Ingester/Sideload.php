@@ -57,7 +57,7 @@ class Sideload implements IngesterInterface
         $maxFiles
     ) {
         // Only work on the resolved real directory path.
-        $this->directory = realpath($directory);
+        $this->directory = $directory ? realpath($directory) : '';
         $this->deleteFile = $deleteFile;
         $this->tempFileFactory = $tempFileFactory;
         $this->validator = $validator;
