@@ -34,6 +34,17 @@ class ConfigForm extends Form
                 'id' => 'delete-file',
             ],
         ]);
+        $this->add([
+            'type' => 'number',
+            'name' => 'filesideload_max_files',
+            'options' => [
+                'label' => 'Maximum number of files to list', // @translate
+            ],
+            'attributes' => [
+                'id' => 'filesideload-max-files',
+                'min' => 0,
+            ],
+        ]);
 
         $inputFilter = $this->getInputFilter();
         $inputFilter->add([
