@@ -262,8 +262,6 @@ class Module extends AbstractModule
      *
      * @param \SplFileInfo $fileinfo
      * @return string|null The real file path or null if the file is invalid.
-     *
-     * @todo Factorize with \FileSideload\Media\Ingester\SideloadDir::verifyFileOrDir()
      */
     protected function verifyFileOrDir(\SplFileInfo $fileinfo, bool $isDir = false): ?string
     {

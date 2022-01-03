@@ -12,9 +12,6 @@ use Omeka\Stdlib\Message;
 use Laminas\Form\Element;
 use Laminas\View\Renderer\PhpRenderer;
 
-/**
- * @todo Factorize with Sideload and avoid to list files and directory in main directory twice.
- */
 class SideloadDir implements IngesterInterface
 {
     /**
@@ -247,7 +244,6 @@ class SideloadDir implements IngesterInterface
                     // There are two filepaths for one dirpath: "." and "..".
                     $filepath = $file->getRealPath();
                     // Don't list empty directories.
-                    // TODO Add the count of files for display.
                     if (!$this->dirHasNoFileAndIsRemovable($filepath)) {
                         // For security, don't display the full path to the user.
                         $relativePath = substr($filepath, $lengthDir);
@@ -280,8 +276,6 @@ class SideloadDir implements IngesterInterface
      *
      * @param \SplFileInfo $fileinfo
      * @return string|null The real file path or null if the file is invalid.
-     *
-     * @todo Factorize with \FileSideload\Module::verifyFileOrDir()
      */
     protected function verifyFileOrDir(\SplFileInfo $fileinfo, bool $isDir = false): ?string
     {
