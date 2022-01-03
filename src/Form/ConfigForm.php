@@ -45,6 +45,17 @@ class ConfigForm extends Form
                 'min' => 0,
             ],
         ]);
+        $this->add([
+            'type' => 'number',
+            'name' => 'filesideload_max_directories',
+            'options' => [
+                'label' => 'Maximum number of directories to list', // @translate
+            ],
+            'attributes' => [
+                'id' => 'filesideload-max-directories',
+                'min' => 0,
+            ],
+        ]);
 
         $inputFilter = $this->getInputFilter();
         $inputFilter->add([

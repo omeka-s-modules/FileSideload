@@ -37,7 +37,7 @@ class SideloadDir implements IngesterInterface
     /**
      * @var int
      */
-    protected $maxFiles;
+    protected $maxDirectories;
 
     /**
      * @var array
@@ -54,21 +54,21 @@ class SideloadDir implements IngesterInterface
      * @param bool $deleteFile
      * @param TempFileFactory $tempFileFactory
      * @param Validator $validator
-     * @param int $maxFiles
+     * @param int $maxDirectories
      */
     public function __construct(
         $directory,
         $deleteFile,
         TempFileFactory $tempFileFactory,
         Validator $validator,
-        $maxFiles
+        $maxDirectories
     ) {
         // Only work on the resolved real directory path.
         $this->directory = $directory ? realpath($directory) : '';
         $this->deleteFile = $deleteFile;
         $this->tempFileFactory = $tempFileFactory;
         $this->validator = $validator;
-        $this->maxFiles = $maxFiles;
+        $this->maxDirectories = $maxDirectories;
     }
 
     public function getLabel()
@@ -250,7 +250,7 @@ class SideloadDir implements IngesterInterface
                         if (!isset($this->listDirs[$relativePath])) {
                             // Use keys for quicker process on big directories.
                             $this->listDirs[$relativePath] = null;
-                            if ($this->maxFiles && ++$countDirs >= $this->maxFiles) {
+                            if ($this->maxDirectories && ++$countDirs >= $this->maxDirectories) {
                                 $this->hasMoreDirs = true;
                                 break;
                             }

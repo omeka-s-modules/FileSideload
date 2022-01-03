@@ -23,6 +23,7 @@ class Module extends AbstractModule
         $settings->delete('file_sideload_directory');
         $settings->delete('file_sideload_delete_file');
         $settings->delete('file_sideload_max_files');
+        $settings->delete('file_sideload_max_directories');
     }
 
     public function attachListeners(SharedEventManagerInterface $sharedEventManager): void
@@ -43,6 +44,7 @@ class Module extends AbstractModule
             'directory' => $settings->get('file_sideload_directory'),
             'delete_file' => $settings->get('file_sideload_delete_file', 'no'),
             'filesideload_max_files' => $settings->get('file_sideload_max_files', 1000),
+            'filesideload_max_directories' => $settings->get('file_sideload_max_directories', 1000),
         ]);
         return $renderer->formCollection($form, false);
     }
@@ -61,6 +63,7 @@ class Module extends AbstractModule
         $settings->set('file_sideload_directory', $formData['directory']);
         $settings->set('file_sideload_delete_file', $formData['delete_file']);
         $settings->set('file_sideload_max_files', (int) $formData['filesideload_max_files']);
+        $settings->set('file_sideload_max_directories', (int) $formData['filesideload_max_directories']);
         return true;
     }
 
