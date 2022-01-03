@@ -113,65 +113,65 @@ class Module extends AbstractModule
                 continue;
             }
 
-            if (!array_key_exists('ingest_folder', $dataMedia)) {
-                $errorStore->addError('ingest_folder', 'No ingest folder specified.'); // @translate
+            if (!array_key_exists('ingest_directory', $dataMedia)) {
+                $errorStore->addError('ingest_directory', 'No ingest directory specified.'); // @translate
                 continue;
             }
 
-            $ingestFolder = (string) $dataMedia['ingest_folder'];
+            $ingestDirectory = (string) $dataMedia['ingest_directory'];
 
             // Some quick security checks are done here instead of ingester
             // to simplify conversion into multiple media.
 
-            if (!strlen($ingestFolder)) {
-                $errorStore->addError('ingest_folder', 'No ingest folder specified.'); // @translate
+            if (!strlen($ingestDirectory)) {
+                $errorStore->addError('ingest_directory', 'No ingest directory specified.'); // @translate
                 continue;
             }
 
-            if ($ingestFolder === '.' || $ingestFolder === '..' || $ingestFolder === '/') {
-                $errorStore->addError('ingest_folder', 'Illegal ingest folder specified.'); // @translate
+            if ($ingestDirectory === '.' || $ingestDirectory === '..' || $ingestDirectory === '/') {
+                $errorStore->addError('ingest_directory', 'Illegal ingest directory specified.'); // @translate
                 continue;
             }
 
-            $isAbsolutePathInsideDir = $this->directory && strpos($ingestFolder, $this->directory) === 0;
-            $folder = $isAbsolutePathInsideDir
-                ? $ingestFolder
-                : $this->directory . DIRECTORY_SEPARATOR . $ingestFolder;
-            $fileinfo = new \SplFileInfo($folder);
-            $folder = $this->verifyFileOrDir($fileinfo, true);
+            $isAbsolutePathInsideDir = $this->directory && strpos($ingestDirectory, $this->directory) === 0;
+            $directory = $isAbsolutePathInsideDir
+                ? $ingestDirectory
+                : $this->directory . DIRECTORY_SEPARATOR . $ingestDirectory;
+            $fileinfo = new \SplFileInfo($directory);
+            $directory = $this->verifyFileOrDir($fileinfo, true);
 
-            if (is_null($folder)) {
+            if (is_null($directory)) {
                 // Set a clearer message in some cases.
                 if ($this->deleteFile && !$fileinfo->getPathInfo()->isWritable()) {
-                    $errorStore->addError('ingest_folder', new Message(
-                        'Ingest folder "%s" is not writeable but the config requires deletion after upload.', // @translate
-                        $ingestFolder
+                    $errorStore->addError('ingest_directory', new Message(
+                        'Ingest directory "%s" is not writeable but the config requires deletion after upload.', // @translate
+                        $ingestDirectory
                     ));
                 } elseif (!$fileinfo->isDir()) {
-                    $errorStore->addError('ingest_folder', new Message(
-                        'Invalid ingest folder "%s" specified: not a directory', // @translate
-                        $ingestFolder
+                    $errorStore->addError('ingest_directory', new Message(
+                        'Invalid ingest directory "%s" specified: not a directory', // @translate
+                        $ingestDirectory
                     ));
                 } else {
-                    $errorStore->addError('ingest_folder', new Message(
-                        'Invalid ingest folder "%s" specified: incorrect path or insufficient permissions', // @translate
-                        $ingestFolder
+                    $errorStore->addError('ingest_directory', new Message(
+                        'Invalid ingest directory "%s" specified: incorrect path or insufficient permissions', // @translate
+                        $ingestDirectory
                     ));
                 }
                 continue;
             }
 
-            $listFiles = $this->listFiles($folder, !empty($dataMedia['ingest_folder_recursively']));
+            $listFiles = $this->listFiles($directory, !empty($dataMedia['ingest_directory_recursively']));
             if (!count($listFiles)) {
-                $errorStore->addError('ingest_folder', new Message(
-                    'Ingest folder "%s" is empty.',  // @translate
-                    $ingestFolder
+                $errorStore->addError('ingest_directory', new Message(
+                    'Ingest directory "%s" is empty.',  // @translate
+                    $ingestDirectory
                 ));
                 continue;
             }
 
             // Convert the media to a list of media for the item hydration.
-            // Remove the added media folder from list of media.
+            // Remove the added media directory from list of media.
             array_pop($newDataMedias);
             foreach ($listFiles as $filepath) {
                 $dataMedia['ingest_filename'] = $filepath;
@@ -183,7 +183,7 @@ class Module extends AbstractModule
     }
 
     /**
-     * Get all files available to sideload from a folder inside the main dir.
+     * Get all files available to sideload from a directory inside the main dir.
      *
      * @return array List of filepaths relative to the main directory.
      */
@@ -243,7 +243,7 @@ class Module extends AbstractModule
             }
         }
 
-        // Don't mix directories and files. List root files, then sub-folders.
+        // Don't mix directories and files. List root files, then sub-directories.
         $listFiles = array_keys($listFiles);
         natcasesort($listFiles);
         $listRootFiles = array_keys($listRootFiles);

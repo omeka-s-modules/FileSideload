@@ -73,7 +73,7 @@ class SideloadDir implements IngesterInterface
 
     public function getLabel()
     {
-        return 'Sideload folder'; // @translate
+        return 'Sideload directory'; // @translate
     }
 
     public function getRenderer()
@@ -82,12 +82,12 @@ class SideloadDir implements IngesterInterface
     }
 
     /**
-     * Ingest from a folder on the server.
+     * Ingest from a directory on the server.
      *
      * Accepts the following non-prefixed keys:
-     * - ingest_folder: (required) The source folder where the file to ingest is.
+     * - ingest_directory: (required) The source directory where the file to ingest is.
      * - ingest_filename: (required) The filename to ingest.
-     * - ingest_folder_recursively: (optional, default false) Ingest folder recursively?
+     * - ingest_directory_recursively: (optional, default false) Ingest directory recursively?
      * - store_original: (optional, default true) Store the original file?
      *
      * {@inheritDoc}
@@ -99,14 +99,14 @@ class SideloadDir implements IngesterInterface
         // Checks are already done during pre-hydration, but another check is
         // needed when the ingester is called directly.
 
-        if (!isset($data['ingest_folder'])) {
-            $errorStore->addError('ingest_folder', 'No ingest folder specified'); // @translate
+        if (!isset($data['ingest_directory'])) {
+            $errorStore->addError('ingest_directory', 'No ingest directory specified'); // @translate
             return;
         }
 
         // This is the checked full real path inside the main directory.
-        $realIngestFolder = $this->checkIngestDir((string) $data['ingest_folder'], $errorStore);
-        if (is_null($realIngestFolder)) {
+        $realIngestDirectory = $this->checkIngestDir((string) $data['ingest_directory'], $errorStore);
+        if (is_null($realIngestDirectory)) {
             return;
         }
 
@@ -115,9 +115,9 @@ class SideloadDir implements IngesterInterface
             return;
         }
 
-        // The check is done against the folder, but the file is relative to the
+        // The check is done against the directory, but the file is relative to the
         // main directory.
-        $isAbsolutePathInsideDir = strpos((string) $data['ingest_filename'], $realIngestFolder) === 0;
+        $isAbsolutePathInsideDir = strpos((string) $data['ingest_filename'], $realIngestDirectory) === 0;
         $filepath = $isAbsolutePathInsideDir
             ? $data['ingest_filename']
             : $this->directory . DIRECTORY_SEPARATOR . $data['ingest_filename'];
@@ -125,18 +125,18 @@ class SideloadDir implements IngesterInterface
         $realPath = $this->verifyFileOrDir($fileinfo);
         if (is_null($realPath)) {
             $errorStore->addError('ingest_filename', new Message(
-                'Cannot sideload file "%s". File does not exist or is not inside main folder or does not have sufficient permissions', // @translate
+                'Cannot sideload file "%s". File does not exist or is not inside main directory or does not have sufficient permissions', // @translate
                 $data['ingest_filename']
             ));
             return;
         }
 
         // When recursive is not set, check if the file is a root file.
-        if (empty($data['ingest_folder_recursively']) && pathinfo($realPath, PATHINFO_DIRNAME) !== $realIngestFolder) {
+        if (empty($data['ingest_directory_recursively']) && pathinfo($realPath, PATHINFO_DIRNAME) !== $realIngestDirectory) {
             $errorStore->addError('ingest_filename', new Message(
-                'Cannot sideload file "%s": ingestion of folder "%s" is not set recursive', // @translate
+                'Cannot sideload file "%s": ingestion of directory "%s" is not set recursive', // @translate
                 $data['ingest_filename'],
-                $data['ingest_folder']
+                $data['ingest_directory']
             ));
         }
 
@@ -163,12 +163,12 @@ class SideloadDir implements IngesterInterface
         }
         unlink($realPath);
 
-        // Check if this is the last file of the ingest folder.
-        if (!$this->dirHasNoFileAndIsRemovable($realIngestFolder)) {
+        // Check if this is the last file of the ingest directory.
+        if (!$this->dirHasNoFileAndIsRemovable($realIngestDirectory)) {
             return;
         }
-        // The ingest folder may have empty folders, so recursive remove it.
-        $this->rrmdir($realIngestFolder);
+        // The ingest directory may have empty directories, so recursive remove it.
+        $this->rrmdir($realIngestDirectory);
     }
 
     public function form(PhpRenderer $view, array $options = [])
@@ -177,33 +177,33 @@ class SideloadDir implements IngesterInterface
 
         $isEmptyDirs = !count($this->listDirs);
         if ($isEmptyDirs) {
-            $emptyOptionDir = 'No folder: add folders in the directory or check its path'; // @translate
+            $emptyOptionDir = 'No directory: add directories in the directory or check its path'; // @translate
         } elseif ($this->hasMoreDirs) {
-            $emptyOptionDir = 'Select a folder to sideload all files inside… (only first ones are listed)'; // @translate
+            $emptyOptionDir = 'Select a directory to sideload all files inside… (only first ones are listed)'; // @translate
         } else {
-            $emptyOptionDir = 'Select a folder to sideload all files inside…'; // @translate
+            $emptyOptionDir = 'Select a directory to sideload all files inside…'; // @translate
         }
 
-        $select = new Element\Select('o:media[__index__][ingest_folder]');
+        $select = new Element\Select('o:media[__index__][ingest_directory]');
         $select
             ->setOptions([
-                'label' => 'Folder', // @translate
-                'info' => 'Folders and files without sufficient permissions are skipped.', // @translate
+                'label' => 'Directory', // @translate
+                'info' => 'Directories and files without sufficient permissions are skipped.', // @translate
                 'value_options' => $this->listDirs,
                 'empty_option' => $emptyOptionDir,
             ])
             ->setAttributes([
-                'id' => 'media-sideload-ingest-folder-__index__',
+                'id' => 'media-sideload-ingest-directory-__index__',
                 'required' => true,
             ]);
 
-        $recursive = new Element\Checkbox('o:media[__index__][ingest_folder_recursively]');
+        $recursive = new Element\Checkbox('o:media[__index__][ingest_directory_recursively]');
         $recursive
             ->setOptions([
-                'label' => 'Ingest folder recursively', // @translate
+                'label' => 'Ingest directory recursively', // @translate
             ])
             ->setAttributes([
-                'id' => 'media-sideload-ingest-folder-recursive-__index__',
+                'id' => 'media-sideload-ingest-directory-recursive-__index__',
                 'required' => false,
             ]);
 
@@ -212,7 +212,7 @@ class SideloadDir implements IngesterInterface
     }
 
     /**
-     * Get all folders available to sideload.
+     * Get all directories available to sideload.
      */
     protected function listDirs(): void
     {
@@ -311,44 +311,44 @@ class SideloadDir implements IngesterInterface
     protected function checkIngestDir(string $directory, ErrorStore $errorStore): ?string
     {
         if (!strlen($directory)) {
-            $errorStore->addError('ingest_folder', 'No ingest folder specified.'); // @translate
+            $errorStore->addError('ingest_directory', 'No ingest directory specified.'); // @translate
             return null;
         }
 
         // Quick security checks.
         if ($directory === '.' || $directory === '..' || $directory === '/') {
-            $errorStore->addError('ingest_folder', 'Illegal ingest folder specified.'); // @translate
+            $errorStore->addError('ingest_directory', 'Illegal ingest directory specified.'); // @translate
             return null;
         }
 
         $isAbsolutePathInsideDir = $this->directory && strpos($directory, $this->directory) === 0;
-        $folder = $isAbsolutePathInsideDir
+        $directory = $isAbsolutePathInsideDir
             ? $directory
             : $this->directory . DIRECTORY_SEPARATOR . $directory;
-        $fileinfo = new \SplFileInfo($folder);
-        $folder = $this->verifyFileOrDir($fileinfo, true);
-        if (is_null($folder)) {
+        $fileinfo = new \SplFileInfo($directory);
+        $directory = $this->verifyFileOrDir($fileinfo, true);
+        if (is_null($directory)) {
             // Set a clearer message in some cases.
             if ($this->deleteFile && !$fileinfo->getPathInfo()->isWritable()) {
-                $errorStore->addError('ingest_folder', new Message(
-                    'Ingest folder "%s" is not writeable but the config requires deletion after upload.', // @translate
+                $errorStore->addError('ingest_directory', new Message(
+                    'Ingest directory "%s" is not writeable but the config requires deletion after upload.', // @translate
                     $directory
                 ));
             } elseif (!$fileinfo->isDir()) {
-                $errorStore->addError('ingest_folder', new Message(
-                    'Invalid ingest folder "%s" specified: not a directory', // @translate
+                $errorStore->addError('ingest_directory', new Message(
+                    'Invalid ingest directory "%s" specified: not a directory', // @translate
                     $directory
                 ));
             } else {
-                $errorStore->addError('ingest_folder', new Message(
-                    'Invalid ingest folder "%s" specified: incorrect path or insufficient permissions', // @translate
+                $errorStore->addError('ingest_directory', new Message(
+                    'Invalid ingest directory "%s" specified: incorrect path or insufficient permissions', // @translate
                     $directory
                 ));
             }
             return null;
         }
 
-        return $folder;
+        return $directory;
     }
 
     /**
