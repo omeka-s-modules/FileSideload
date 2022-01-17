@@ -233,7 +233,7 @@ class Module extends AbstractModule
                 }
             }
         } else {
-            $iterator = new \DirectoryIterator($dir);
+            $iterator = new \DirectoryIterator($directory);
             /** @var \DirectoryIterator $file */
             foreach ($iterator as $file) {
                 $filepath = $this->verifyFileOrDir($file);
