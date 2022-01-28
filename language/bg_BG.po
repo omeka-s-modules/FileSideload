@@ -4,18 +4,18 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 # 
 # Translators:
-# Hong Zhang <zhangh@unlv.nevada.edu>, 2021
+# Tzvetan Tzvetanski <ceibg.org@gmail.com>, 2021
 # 
 #, fuzzy
 msgid ""
 msgstr ""
-"Last-Translator: Hong Zhang <zhangh@unlv.nevada.edu>, 2021\n"
-"Language-Team: Chinese (China) (https://www.transifex.com/omeka/teams/14184/zh_CN/)\n"
+"Last-Translator: Tzvetan Tzvetanski <ceibg.org@gmail.com>, 2021\n"
+"Language-Team: Bulgarian (Bulgaria) (https://www.transifex.com/omeka/teams/14184/bg_BG/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: zh_CN\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: bg_BG\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: Module.php:120 Module.php:130 src/Media/Ingester/SideloadDir.php:314
 msgid "No ingest directory specified."
@@ -51,23 +51,29 @@ msgstr ""
 
 #: src/Form/ConfigForm.php:15 src/Media/Ingester/SideloadDir.php:76
 msgid "Sideload directory"
-msgstr "侧面加载目录"
+msgstr "Сайдлоуд директория"
 
 #: src/Form/ConfigForm.php:16
 msgid ""
 "Enter the absolute path to the directory where files to be sideloaded will "
 "be added. The directory can be anywhere on your server."
-msgstr "输入侧面加载的文件将被添加入的目录绝对路径。目录可以在您的服务器上的任意地方。"
+msgstr ""
+"Въведете абсолютния път към директорията, където ще бъдат добавени файлове, "
+"които да бъдат заредени. Директорията може да бъде навсякъде на вашия "
+"сървър."
 
 #: src/Form/ConfigForm.php:27
 msgid "Delete sideloaded file?"
-msgstr "删除侧面加载的文件？"
+msgstr "Изтриване на сайдлоуд файла?"
 
 #: src/Form/ConfigForm.php:28
 msgid ""
 "Do you want to delete a file from the sideload directory after it has been "
 "sideloaded? If so, the directory must be server-writable."
-msgstr "您想在一个文件被侧面加载后从侧面加载目录中删除吗？如果是的话，目录必须是服务器可写的。"
+msgstr ""
+"Искате ли да изтриете файл от директорията за странично зареждане, след като"
+" е изтеглен странично? Ако е така, директорията трябва да може да се записва"
+" в сървъра."
 
 #: src/Form/ConfigForm.php:41
 msgid "Maximum number of files to list"
@@ -81,26 +87,30 @@ msgstr ""
 msgid ""
 "The provided sideload directory is not a directory or does not have "
 "sufficient permissions."
-msgstr "给定的侧面加载目录不是一个目录或没有足够权限。"
+msgstr ""
+"Предоставената директория за сайдлоуд не е директория или няма достатъчно "
+"разрешения."
 
 #: src/Media/Ingester/Sideload.php:69
 msgid "Sideload"
-msgstr "侧面加载"
+msgstr "Сайдлоуд - прехвърляне на файлове мужду две локални устройства"
 
 #: src/Media/Ingester/Sideload.php:91 src/Media/Ingester/SideloadDir.php:114
 msgid "No ingest filename specified"
-msgstr "没有指定输入文件名"
+msgstr "Не е посочено име на погълнатия файл"
 
 #: src/Media/Ingester/Sideload.php:103
 #, php-format
 msgid ""
 "Cannot sideload file \"%s\". File does not exist or does not have sufficient"
 " permissions"
-msgstr "无法侧面加载文件“%s”。文件不存在或没有足够权限"
+msgstr ""
+"Не може да се зареди сайдлоуд файл \"%s\". Файлът не съществува или няма "
+"достатъчно разрешения"
 
 #: src/Media/Ingester/Sideload.php:136
 msgid "No file: add files in the directory or check its path"
-msgstr "没有文件：添加目录下的文件或检查文件路径"
+msgstr "Няма файл: добавете файлове в директорията или проверете пътя й"
 
 #: src/Media/Ingester/Sideload.php:138
 msgid "Select a file to sideload… (only first ones are listed)"
@@ -108,7 +118,7 @@ msgstr ""
 
 #: src/Media/Ingester/Sideload.php:140
 msgid "Select a file to sideload…"
-msgstr "选择一个文件来侧面加载 ......"
+msgstr "Изберете файл за сайдлоуд ..."
 
 #: src/Media/Ingester/SideloadDir.php:103
 msgid "No ingest directory specified"

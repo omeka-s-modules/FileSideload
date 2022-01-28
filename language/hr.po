@@ -4,18 +4,19 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 # 
 # Translators:
-# Hong Zhang <zhangh@unlv.nevada.edu>, 2021
+# Angela-Marina Batarelo <angela-marina.batarelo@ericsson.com>, 2021
+# Josip Ilic <josip.ilic@ericsson.com>, 2021
 # 
 #, fuzzy
 msgid ""
 msgstr ""
-"Last-Translator: Hong Zhang <zhangh@unlv.nevada.edu>, 2021\n"
-"Language-Team: Chinese (China) (https://www.transifex.com/omeka/teams/14184/zh_CN/)\n"
+"Last-Translator: Josip Ilic <josip.ilic@ericsson.com>, 2021\n"
+"Language-Team: Croatian (https://www.transifex.com/omeka/teams/14184/hr/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: zh_CN\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: hr\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
 
 #: Module.php:120 Module.php:130 src/Media/Ingester/SideloadDir.php:314
 msgid "No ingest directory specified."
@@ -51,23 +52,23 @@ msgstr ""
 
 #: src/Form/ConfigForm.php:15 src/Media/Ingester/SideloadDir.php:76
 msgid "Sideload directory"
-msgstr "侧面加载目录"
+msgstr "Direktorij bočnog učitanja"
 
 #: src/Form/ConfigForm.php:16
 msgid ""
 "Enter the absolute path to the directory where files to be sideloaded will "
 "be added. The directory can be anywhere on your server."
-msgstr "输入侧面加载的文件将被添加入的目录绝对路径。目录可以在您的服务器上的任意地方。"
+msgstr ""
 
 #: src/Form/ConfigForm.php:27
 msgid "Delete sideloaded file?"
-msgstr "删除侧面加载的文件？"
+msgstr "Izbriši datoteku bočnog učitanja?"
 
 #: src/Form/ConfigForm.php:28
 msgid ""
 "Do you want to delete a file from the sideload directory after it has been "
 "sideloaded? If so, the directory must be server-writable."
-msgstr "您想在一个文件被侧面加载后从侧面加载目录中删除吗？如果是的话，目录必须是服务器可写的。"
+msgstr ""
 
 #: src/Form/ConfigForm.php:41
 msgid "Maximum number of files to list"
@@ -81,26 +82,46 @@ msgstr ""
 msgid ""
 "The provided sideload directory is not a directory or does not have "
 "sufficient permissions."
-msgstr "给定的侧面加载目录不是一个目录或没有足够权限。"
+msgstr ""
+"Pruženi direktorij bočnog učitanja nije direktorij ili nema dovoljnja "
+"dopuštenja."
 
 #: src/Media/Ingester/Sideload.php:69
 msgid "Sideload"
-msgstr "侧面加载"
+msgstr "Bočno učitanje"
 
 #: src/Media/Ingester/Sideload.php:91 src/Media/Ingester/SideloadDir.php:114
 msgid "No ingest filename specified"
-msgstr "没有指定输入文件名"
+msgstr ""
+"Nije navedeno nijedno ime datoteke\n"
+" \n"
+"\n"
+" \n"
+" \n"
+" \n"
+" \n"
+" "
 
 #: src/Media/Ingester/Sideload.php:103
 #, php-format
 msgid ""
 "Cannot sideload file \"%s\". File does not exist or does not have sufficient"
 " permissions"
-msgstr "无法侧面加载文件“%s”。文件不存在或没有足够权限"
+msgstr ""
+"Nije moguće bočno učitati datoteku \"%s\": Datoteka ne postoji ili nema "
+"dovoljnja dopuštenja"
 
 #: src/Media/Ingester/Sideload.php:136
 msgid "No file: add files in the directory or check its path"
-msgstr "没有文件：添加目录下的文件或检查文件路径"
+msgstr ""
+"Nema datoteke: dodajte datoteke u direktorij ili provjerite njegovu putanju\n"
+" \n"
+"\n"
+" \n"
+" \n"
+" \n"
+" \n"
+" "
 
 #: src/Media/Ingester/Sideload.php:138
 msgid "Select a file to sideload… (only first ones are listed)"
@@ -108,7 +129,7 @@ msgstr ""
 
 #: src/Media/Ingester/Sideload.php:140
 msgid "Select a file to sideload…"
-msgstr "选择一个文件来侧面加载 ......"
+msgstr ""
 
 #: src/Media/Ingester/SideloadDir.php:103
 msgid "No ingest directory specified"

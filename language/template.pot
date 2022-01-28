@@ -10,34 +10,39 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/Media/Ingester/Sideload.php:52
-msgid "Sideload"
+#: Module.php:120 Module.php:130 src/Media/Ingester/SideloadDir.php:314
+msgid "No ingest directory specified."
 msgstr ""
 
-#: src/Media/Ingester/Sideload.php:74
-msgid "No ingest filename specified"
+#: Module.php:135 src/Media/Ingester/SideloadDir.php:320
+msgid "Illegal ingest directory specified."
 msgstr ""
 
-#: src/Media/Ingester/Sideload.php:86
+#: Module.php:150 src/Media/Ingester/SideloadDir.php:334
 #, php-format
 msgid ""
-"Cannot sideload file \"%s\". File does not exist or does not have sufficient "
+"Ingest directory \"%s\" is not writeable but the config requires deletion "
+"after upload."
+msgstr ""
+
+#: Module.php:155 src/Media/Ingester/SideloadDir.php:339
+#, php-format
+msgid "Invalid ingest directory \"%s\" specified: not a directory"
+msgstr ""
+
+#: Module.php:160 src/Media/Ingester/SideloadDir.php:344
+#, php-format
+msgid ""
+"Invalid ingest directory \"%s\" specified: incorrect path or insufficient "
 "permissions"
 msgstr ""
 
-#: src/Media/Ingester/Sideload.php:123
-msgid "No file: add files in the directory or check its path"
+#: Module.php:170
+#, php-format
+msgid "Ingest directory \"%s\" is empty."
 msgstr ""
 
-#: src/Media/Ingester/Sideload.php:124
-msgid "Select a file to sideload…"
-msgstr ""
-
-#: src/Media/Ingester/Sideload.php:125
-msgid "The filename."
-msgstr ""
-
-#: src/Form/ConfigForm.php:15
+#: src/Form/ConfigForm.php:15 src/Media/Ingester/SideloadDir.php:76
 msgid "Sideload directory"
 msgstr ""
 
@@ -57,8 +62,86 @@ msgid ""
 "sideloaded? If so, the directory must be server-writable."
 msgstr ""
 
-#: src/Form/ConfigForm.php:50
+#: src/Form/ConfigForm.php:41
+msgid "Maximum number of files to list"
+msgstr ""
+
+#: src/Form/ConfigForm.php:52
+msgid "Maximum number of directories to list"
+msgstr ""
+
+#: src/Form/ConfigForm.php:72
 msgid ""
 "The provided sideload directory is not a directory or does not have "
 "sufficient permissions."
+msgstr ""
+
+#: src/Media/Ingester/Sideload.php:69
+msgid "Sideload"
+msgstr ""
+
+#: src/Media/Ingester/Sideload.php:91 src/Media/Ingester/SideloadDir.php:114
+msgid "No ingest filename specified"
+msgstr ""
+
+#: src/Media/Ingester/Sideload.php:103
+#, php-format
+msgid ""
+"Cannot sideload file \"%s\". File does not exist or does not have sufficient "
+"permissions"
+msgstr ""
+
+#: src/Media/Ingester/Sideload.php:136
+msgid "No file: add files in the directory or check its path"
+msgstr ""
+
+#: src/Media/Ingester/Sideload.php:138
+msgid "Select a file to sideload… (only first ones are listed)"
+msgstr ""
+
+#: src/Media/Ingester/Sideload.php:140
+msgid "Select a file to sideload…"
+msgstr ""
+
+#: src/Media/Ingester/SideloadDir.php:103
+msgid "No ingest directory specified"
+msgstr ""
+
+#: src/Media/Ingester/SideloadDir.php:128
+#, php-format
+msgid ""
+"Cannot sideload file \"%s\". File does not exist or is not inside main "
+"directory or does not have sufficient permissions"
+msgstr ""
+
+#: src/Media/Ingester/SideloadDir.php:137
+#, php-format
+msgid ""
+"Cannot sideload file \"%s\": ingestion of directory \"%s\" is not set "
+"recursive"
+msgstr ""
+
+#: src/Media/Ingester/SideloadDir.php:180
+msgid "No directory: add directories in the directory or check its path"
+msgstr ""
+
+#: src/Media/Ingester/SideloadDir.php:182
+msgid ""
+"Select a directory to sideload all files inside… (only first ones are listed)"
+msgstr ""
+
+#: src/Media/Ingester/SideloadDir.php:184
+msgid "Select a directory to sideload all files inside…"
+msgstr ""
+
+#: src/Media/Ingester/SideloadDir.php:190
+msgid "Directory"
+msgstr ""
+
+#: src/Media/Ingester/SideloadDir.php:191
+msgid "Directories and files without sufficient permissions are skipped."
+msgstr ""
+
+#: src/Media/Ingester/SideloadDir.php:203
+msgid "Ingest directory recursively"
 msgstr ""
