@@ -88,7 +88,7 @@ class Sideload implements IngesterInterface
     {
         $data = $request->getContent();
         if (!isset($data['ingest_filename'])) {
-            $errorStore->addError('ingest_filename', 'No ingest filename specified'); // @translate;
+            $errorStore->addError('ingest_filename', 'No ingest filename specified'); // @translate
             return;
         }
 
