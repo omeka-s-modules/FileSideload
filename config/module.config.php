@@ -1,6 +1,8 @@
 <?php
 namespace FileSideload;
 
+use Osii\Service\MediaIngesterMapper\MediaIngesterMapperFactory;
+
 return [
     'media_ingesters' => [
         'factories' => [
@@ -21,6 +23,14 @@ return [
     'csv_import' => [
         'media_ingester_adapter' => [
             'sideload' => CSVImport\SideloadMediaIngesterAdapter::class,
+        ],
+    ],
+    'osii_media_ingester_mappers' => [
+        'factories' => [
+            Osii\MediaIngesterMapper\Sideload::class => MediaIngesterMapperFactory::class,
+        ],
+        'aliases' => [
+            'sideload' => Osii\MediaIngesterMapper\Sideload::class,
         ],
     ],
 ];
