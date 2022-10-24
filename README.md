@@ -61,6 +61,79 @@ too:
             'Omeka\File\Store' => 'FileSideload\File\Store\LocalHardLink',
 ```
 
+## Mount NFS
+
+For nfs, the id may need to be mapped between remote server and client. So check:
+
+1. on remote server, the file `/etc/exports` should reference the client uid of
+  the web user, for example with `1003`:
+
+  ```
+/remote/directory/files 98.76.54.32(rw,sync,all_squash,no_subtree_check,anonuid=1003,anongid=1003)
+```
+
+2. enable the id mapping on the remote:
+
+```sh
+echo N > /sys/module/nfsd/parameters/nfs4_disable_idmapping
+```
+
+3. Update the config and restart the nfs server:
+
+```sh
+exportfs -arv
+nfsidmap -c
+systemctl restart nfs-idmapd
+```
+
+4. On the client, update the local mapping in file /etc/idmapd.conf:
+
+```ini
+[Mapping]
+
+Nobody-User = omeka
+Nobody-Group = omeka
+```
+
+5. Update the file `/etc/fstab` according to your config.
+
+```fstab
+123.45.67.89:/remote/directory/files    /var/www/omeka/files            nfs4    rw,noexec,nosuid,rsize=524288,wsize=524288,hard,intr,_netdev 0 0
+```
+
+For complex mount, you may try to bind directories. For example in `/etc/fstab`:
+
+```fstab
+# Remote directory for original, temp and sideload.
+123.45.67.89:/remote/directory/files    /var/www/omeka/files            nfs4    rw,noexec,nosuid,rsize=524288,wsize=524288,hard,intr,_netdev 0 0
+
+# Local directories for other directories.
+/var/www/omeka/files_local/asset        /var/www/omeka/files/asset      none    defaults,bind,_netdev 0 0
+/var/www/omeka/files_local/large        /var/www/omeka/files/large      none    defaults,bind,_netdev 0 0
+/var/www/omeka/files_local/medium       /var/www/omeka/files/medium     none    defaults,bind,_netdev 0 0
+/var/www/omeka/files_local/square       /var/www/omeka/files/square     none    defaults,bind,_netdev 0 0
+/var/www/omeka/files_local/tile         /var/www/omeka/files/tile       none    defaults,bind,_netdev 0 0
+```
+
+or, in some cases, the inverse (mount remote directory somewhere, then bind them
+in /files:
+
+```fstab
+# Remote directory for original, temp and sideload.
+123.45.67.89:/remote/directory/files    /var/www/omeka/files_remote     nfs4    rw,noexec,nosuid,rsize=524288,wsize=524288,hard,intr,_netdev 0 0
+/var/www/omeka/files_remote/original    /var/www/omeka/files/original   none    defaults,bind,_netdev 0 0
+/var/www/omeka/files_remote/sideload    /var/www/omeka/files/sideload   none    defaults,bind,_netdev 0 0
+/var/www/omeka/files_remote/temp        /var/www/omeka/files/temp       none    defaults,bind,_netdev 0 0
+```
+
+You may have to copy the file `/files/index.html` too.
+
+6. Unmount and remount the nfs.
+
+```sh
+mount -a
+```
+
 ## TODO
 
 - [ ] Avoid the intermediate temp directory, but keep the standard Omeka process used to validate files.
