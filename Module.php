@@ -38,6 +38,8 @@ class Module extends AbstractModule
 
     public function getConfigForm(PhpRenderer $renderer)
     {
+        $this->warnConfig();
+
         $services = $this->getServiceLocator();
         $settings = $services->get('Omeka\Settings');
         $form = $services->get('FormElementManager')->get(ConfigForm::class);
@@ -55,6 +57,8 @@ class Module extends AbstractModule
 
     public function handleConfigForm(AbstractController $controller)
     {
+        $this->warnConfig();
+
         $services = $this->getServiceLocator();
         $settings = $services->get('Omeka\Settings');
         $form = $services->get('FormElementManager')->get(ConfigForm::class);
@@ -72,6 +76,39 @@ class Module extends AbstractModule
         $settings->set('file_sideload_max_directories', (int) $formData['filesideload_max_directories']);
         $settings->set('file_sideload_mode', $formData['filesideload_mode']);
         return true;
+    }
+
+    protected function warnConfig(): void
+    {
+        $services = $this->getServiceLocator();
+
+        $messenger = $services->get('ControllerPluginManager')->get('messenger');
+        $translator = $services->get('MvcTranslator');
+        $config = $services->get('Config');
+
+        $mode = $services->get('Omeka\Settings')->get('file_sideload_mode', 'copy');
+        $fileStore = $config['service_manager']['aliases']['Omeka\File\Store'];
+        $tempDir = $config['temp_dir'];
+
+        if ($mode !== 'copy'
+            && $fileStore !== 'FileSideload\File\Store\LocalHardLink'
+        ) {
+            $message = new \Omeka\Stdlib\Message(
+                $translator->translate('The mode uses hardlinks, but the Omeka local store does not use it. The key `[service_manager][aliases][Omeka\File\Store]` should be updated in the main config file of Omeka "config/local.config.php".') // @translate
+            );
+            $messenger->addError($message);
+        }
+
+        if ($tempDir === sys_get_temp_dir()) {
+            $message = new \Omeka\Stdlib\Message(
+                $translator->translate('The temp directory is the default one. It should be on the same file system than the directory used for original files "/files/original" and than the sideload directory. The key `[temp_dir]` should be updated in the main config file of Omeka "config/local.config.php".') // @translate
+            );
+            $messenger->addWarning($message);
+            $message = new \Omeka\Stdlib\Message(
+                $translator->translate('Ignore the message above if the three directories (temp, original and sideload) are on the same file system. This point cannot be checked by Omeka currently.') // @translate
+            );
+            $messenger->addWarning($message);
+        }
     }
 
     public function handleItemApiHydratePre(Event $event)
