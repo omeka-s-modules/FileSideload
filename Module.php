@@ -90,9 +90,18 @@ class Module extends AbstractModule
         $fileStore = $config['service_manager']['aliases']['Omeka\File\Store'];
         $tempDir = $config['temp_dir'];
 
-        if ($mode !== 'copy'
-            && $fileStore !== 'FileSideload\File\Store\LocalHardLink'
-        ) {
+        if ($mode === 'copy') {
+            if ($fileStore === 'FileSideload\File\Store\LocalHardLink') {
+                $message = new \Omeka\Stdlib\Message(
+                    $translator->translate('The mode uses copy, but the Omeka local store uses local hard links. You may reset the key `[service_manager][aliases][Omeka\File\Store]` in the main config file of Omeka "config/local.config.php".') // @translate
+                );
+                $messenger->addWarning($message);
+            }
+            // No more check.
+            return;
+        }
+
+        if ($fileStore !== 'FileSideload\File\Store\LocalHardLink') {
             $message = new \Omeka\Stdlib\Message(
                 $translator->translate('The mode uses hardlinks, but the Omeka local store does not use it. The key `[service_manager][aliases][Omeka\File\Store]` should be updated in the main config file of Omeka "config/local.config.php".') // @translate
             );
