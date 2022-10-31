@@ -7,6 +7,7 @@ use Laminas\EventManager\SharedEventManagerInterface;
 use Laminas\Mvc\Controller\AbstractController;
 use Laminas\ServiceManager\ServiceLocatorInterface;
 use Laminas\View\Renderer\PhpRenderer;
+use Omeka\Api\Representation\UserRepresentation;
 use Omeka\Module\AbstractModule;
 use Omeka\Stdlib\Message;
 
@@ -48,6 +49,18 @@ class Module extends AbstractModule
             \Omeka\Form\UserForm::class,
             'form.add_input_filters',
             [$this, 'addUserFormElementFilter']
+        );
+
+        // Display the user directory in the user show admin pages.
+        $sharedEventManager->attach(
+            'Omeka\Controller\Admin\User',
+            'view.details',
+            [$this, 'viewUserDetails']
+        );
+        $sharedEventManager->attach(
+            'Omeka\Controller\Admin\User',
+            'view.show.after',
+            [$this, 'viewUserShowAfter']
         );
     }
 
@@ -313,6 +326,42 @@ class Module extends AbstractModule
             $valid = $valid && $dir->isWritable();
         }
         return $valid;
+    }
+
+    public function viewUserDetails(Event $event): void
+    {
+        $view = $event->getTarget();
+        $user = $view->resource;
+        $this->viewUserData($view, $user);
+    }
+
+    public function viewUserShowAfter(Event $event): void
+    {
+        $view = $event->getTarget();
+        $user = $view->vars()->user;
+        $this->viewUserData($view, $user);
+    }
+
+    protected function viewUserData(PhpRenderer $view, UserRepresentation $user): void
+    {
+        $services = $this->getServiceLocator();
+        $userSettings = $services->get('Omeka\Settings\User');
+        $userSettings->setTargetId($user->id());
+
+        $label = $view->translate('Server directory'); // @translate
+        $userDirectory = $userSettings->get('filesideload_user_dir', '');
+        $userDir = strlen($userDirectory) ? $userDirectory : $view->translate('[root]'); // @translate
+
+        $html = <<<'HTML'
+<div class="property">
+    <h4>%1$s</h4>
+    <div class="value">
+        %2$s
+    </div>
+</div>
+
+HTML;
+        echo sprintf($html, $label, $userDir);
     }
 
     /**
