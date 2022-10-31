@@ -161,13 +161,17 @@ class Sideload implements IngesterInterface
         $select->setOptions([
             'label' => 'File', // @translate
             'value_options' => $files,
-            'empty_option' => $emptyOption,
+            'empty_option' => '',
         ]);
         $select->setAttributes([
             'id' => 'media-sideload-ingest-filename-__index__',
             'required' => true,
+            'class' => 'media-sideload-select chosen-select',
+            'data-placeholder' => $emptyOption,
         ]);
-        return $view->formRow($select);
+        return $view->formRow($select)
+            // Ideally should be in a js file of the module or Omeka.
+            . '<script>$(".media-sideload-select").chosen(window.chosenOptions);</script>';
     }
 
     /**

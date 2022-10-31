@@ -206,11 +206,13 @@ class SideloadDir implements IngesterInterface
                 'label' => 'Directory', // @translate
                 'info' => 'Directories and files without sufficient permissions are skipped.', // @translate
                 'value_options' => $this->listDirs,
-                'empty_option' => $emptyOptionDir,
+                'empty_option' => '',
             ])
             ->setAttributes([
                 'id' => 'media-sideload-ingest-directory-__index__',
                 'required' => true,
+                'class' => 'media-sideload-select chosen-select',
+                'data-placeholder' => $emptyOptionDir,
             ]);
 
         $recursive = new Element\Checkbox('o:media[__index__][ingest_directory_recursively]');
@@ -224,6 +226,8 @@ class SideloadDir implements IngesterInterface
             ]);
 
         return $view->formRow($select)
+            // Ideally should be in a js file of the module or Omeka.
+            . '<script>$(".media-sideload-select").chosen(window.chosenOptions);</script>'
             . $view->formRow($recursive);
     }
 
