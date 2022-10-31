@@ -142,9 +142,15 @@ class Sideload implements IngesterInterface
 
     public function form(PhpRenderer $view, array $options = [])
     {
+        // When the user dir is different from the main dir, prepend the main
+        // dir path to simplify hydration.
+        $prependPath = $this->userDirectory === $this->directory
+            ? ''
+            : mb_substr($this->userDirectory, mb_strlen($this->directory) + 1) . DIRECTORY_SEPARATOR;
+
         $mainDirectory = $this->directory;
         $this->directory = $this->userDirectory;
-        $files = $this->getFiles();
+        $files = $this->getFiles($prependPath);
         $this->directory = $mainDirectory;
 
         $isEmpty = empty($files);
@@ -179,7 +185,7 @@ class Sideload implements IngesterInterface
      *
      * @return array
      */
-    public function getFiles()
+    public function getFiles(string $prependPath = '')
     {
         $files = [];
         $count = 0;
@@ -200,8 +206,7 @@ class Sideload implements IngesterInterface
                 if ($this->verifyFile($file)) {
                     // For security, don't display the full path to the user.
                     $relativePath = substr($filepath, $lengthDir);
-                    // Use keys for quicker process on big directories.
-                    $files[$relativePath] = null;
+                    $files[$prependPath . $relativePath] = $relativePath;
                     if ($this->maxFiles && ++$count >= $this->maxFiles) {
                         $this->hasMoreFiles = true;
                         break;
@@ -222,9 +227,9 @@ class Sideload implements IngesterInterface
             }
             return $bInRoot ? -1 : 1;
         };
-        uksort($files, $alphabeticAndDirFirst);
+        uasort($files, $alphabeticAndDirFirst);
 
-        return array_combine(array_keys($files), array_keys($files));
+        return $files;
     }
 
     /**

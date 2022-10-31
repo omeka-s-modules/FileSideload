@@ -186,9 +186,15 @@ class SideloadDir implements IngesterInterface
 
     public function form(PhpRenderer $view, array $options = [])
     {
+        // When the user dir is different from the main dir, prepend the main
+        // dir path to simplify hydration.
+        $prependPath = $this->userDirectory === $this->directory
+            ? ''
+            : mb_substr($this->userDirectory, mb_strlen($this->directory) + 1) .  DIRECTORY_SEPARATOR;
+
         $mainDirectory = $this->directory;
         $this->directory = $this->userDirectory;
-        $this->listDirs();
+        $this->listDirs($prependPath);
         $this->directory = $mainDirectory;
 
         $isEmptyDirs = !count($this->listDirs);
@@ -234,7 +240,7 @@ class SideloadDir implements IngesterInterface
     /**
      * Get all directories available to sideload.
      */
-    protected function listDirs(): void
+    protected function listDirs(string $prependPath = ''): void
     {
         $this->listDirs = [];
         $this->hasMoreDirs = false;
@@ -267,9 +273,8 @@ class SideloadDir implements IngesterInterface
                     if (!$this->dirHasNoFileAndIsRemovable($filepath)) {
                         // For security, don't display the full path to the user.
                         $relativePath = substr($filepath, $lengthDir);
-                        if (!isset($this->listDirs[$relativePath])) {
-                            // Use keys for quicker process on big directories.
-                            $this->listDirs[$relativePath] = null;
+                        if (!isset($this->listDirs[$prependPath . $relativePath])) {
+                            $this->listDirs[$prependPath . $relativePath] = $relativePath;
                             if ($this->maxDirectories && ++$countDirs >= $this->maxDirectories) {
                                 $this->hasMoreDirs = true;
                                 break;
@@ -280,9 +285,7 @@ class SideloadDir implements IngesterInterface
             }
         }
 
-        $this->listDirs = array_keys($this->listDirs);
         natcasesort($this->listDirs);
-        $this->listDirs = array_combine($this->listDirs, $this->listDirs);
     }
 
     /**
