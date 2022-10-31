@@ -13,7 +13,7 @@ class ConfigForm extends Form
             'name' => 'directory',
             'options' => [
                 'label' => 'Sideload directory', // @translate
-                'info' => 'Enter the absolute path to the directory where files to be sideloaded will be added. The directory can be anywhere on your server.', // @translate
+                'info' => 'Enter the absolute path to the directory where files to be sideloaded will be added. The directory can be anywhere on your server. The users may choose any directory inside it as root.', // @translate
             ],
             'attributes' => [
                 'required' => true,

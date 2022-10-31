@@ -24,6 +24,10 @@ class Module extends AbstractModule
         $settings->delete('file_sideload_delete_file');
         $settings->delete('file_sideload_max_files');
         $settings->delete('file_sideload_max_directories');
+
+        /** @var \Doctrine\DBAL\Connection $connection */
+        $connection = $serviceLocator->get('Omeka\Connection');
+        $connection->executeStatement('DELETE FROM `user_setting` WHERE `id` LIKE "filesideload#_%" ESCAPE "#";');
     }
 
     public function attachListeners(SharedEventManagerInterface $sharedEventManager): void
@@ -32,6 +36,18 @@ class Module extends AbstractModule
             \Omeka\Api\Adapter\ItemAdapter::class,
             'api.hydrate.pre',
             [$this, 'handleItemApiHydratePre']
+        );
+
+        // Add the user directory setting to the user form.
+        $sharedEventManager->attach(
+            \Omeka\Form\UserForm::class,
+            'form.add_elements',
+            [$this, 'addUserFormElement']
+        );
+        $sharedEventManager->attach(
+            \Omeka\Form\UserForm::class,
+            'form.add_input_filters',
+            [$this, 'addUserFormElementFilter']
         );
     }
 
@@ -185,6 +201,120 @@ class Module extends AbstractModule
         $request->setContent($data);
     }
 
+    public function addUserFormElement(Event $event): void
+    {
+        /** @var \Omeka\Form\UserForm $form */
+        $form = $event->getTarget();
+        if ($form->getOption('is_public')) {
+            return;
+        }
+
+        /**
+         * @var \Omeka\Entity\User $user
+         */
+        $services = $this->getServiceLocator();
+        $settings = $services->get('Omeka\Settings');
+        $entityManager = $services->get('Omeka\EntityManager');
+
+        // The user is not the current user, but the user in the form.
+        // It may be empty for a new user.
+        $userId = $services->get('Application')->getMvcEvent()->getRouteMatch()->getParam('id');
+        $user = $userId ? $entityManager->find(\Omeka\Entity\User::class, $userId) : null;
+
+        $mainDirectory = $settings->get('file_sideload_directory', '');
+        $this->directory = $mainDirectory;
+        $this->deleteFile = $settings->get('file_sideload_delete_file') === 'yes';
+
+        // Manage a direct creation (no id).
+        if ($user) {
+            /** @var \Omeka\Settings\UserSettings $userSettings */
+            $userSettings = $services->get('Omeka\Settings\User');
+            $userSettings->setTargetId($userId);
+            $userDir = $userSettings->get('filesideload_user_dir', '');
+        } else {
+            $userDir = '';
+        }
+
+        // Max 2 levels because it is the most common case: one level for the
+        // user or institution, and when the first is the institution, a second
+        // for the collections or the users. Maybe 3, but no more for now in
+        // order to avoid issues with big directories.
+        // This option only applies to the user interface anyway.
+        $maxDepth = 2;
+        $maxDirs = (int) $settings->get('file_sideload_max_directories');
+        $directories = $mainDirectory ? $this->listDirs($mainDirectory, $maxDepth, $maxDirs) : [];
+
+        $fieldset = $form->get('user-settings');
+        $fieldset
+            ->add([
+                'name' => 'filesideload_user_dir',
+                'type' => \Laminas\Form\Element\Select::class,
+                'options' => [
+                    'label' => 'Server directory', // @translate
+                    'empty_option' => '',
+                    'value_options' => $directories,
+                ],
+                'attributes' => [
+                    'id' => 'filesideload_user_dir',
+                    'value' => $userDir,
+                    'required' => false,
+                    'disabled' => empty($mainDirectory),
+                    'class' => 'chosen-select',
+                    'data-placeholder' => count($directories)
+                        ? 'Select a sub-directory…' // @translate
+                        : 'No sub-directory in main directory', // @translate
+                ],
+            ]);
+    }
+
+    public function addUserFormElementFilter(Event $event): void
+    {
+        $form = $event->getTarget();
+        $inputFilter = $form->getInputFilter();
+        $inputFilter->add([
+            'name' => 'filesideload_user_dir',
+            'required' => false,
+            'filters' => [
+                ['name' => 'StringTrim'],
+            ],
+            'validators' => [
+                [
+                    'name' => 'Callback',
+                    'options' => [
+                        'messages' => [
+                            \Laminas\Validator\Callback::INVALID_VALUE => 'The provided sideload directory is not a directory or does not have sufficient permissions.', // @translate
+                        ],
+                        'callback' => [$this, 'userDirectoryIsValid'],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function userDirectoryIsValid($dir, $context)
+    {
+        // The user directory is not required.
+        if ($dir === '') {
+            return true;
+        }
+        // For security, even if checked via haystack.
+        if (mb_strpos($dir, '..') !== false) {
+            return false;
+        }
+        // The user directory is stored as a sub-path of the main directory.
+        $mainDirectory = $this->getServiceLocator()->get('Omeka\Settings')->get('file_sideload_directory');
+        if (!$mainDirectory || !realpath($mainDirectory)) {
+            return false;
+        }
+        $userDirectory = $mainDirectory . DIRECTORY_SEPARATOR . $dir;
+        $dir = new \SplFileInfo($userDirectory);
+        $valid = $dir->isDir() && $dir->isExecutable() && $dir->isReadable();
+        if (isset($context['delete_file']) && 'yes' === $context['delete_file']) {
+            $valid = $valid && $dir->isWritable();
+        }
+        return $valid;
+    }
+
     /**
      * Get all files available to sideload from a directory inside the main dir.
      *
@@ -252,6 +382,81 @@ class Module extends AbstractModule
         $listRootFiles = array_keys($listRootFiles);
         natcasesort($listRootFiles);
         return array_values(array_unique(array_merge($listRootFiles, $listFiles)));
+    }
+
+    /**
+     * Get all directories available to sideload.
+     */
+    protected function listDirs(string $directory, int $maxDepth = -1, int $maxDirectories = 0): array
+    {
+        $listDirs = [];
+
+        $dir = new \SplFileInfo($directory);
+        if (!$dir->isDir()) {
+            return [];
+        }
+
+        $countDirs = 0;
+        $this->directory = $directory;
+
+        $lengthDir = strlen($directory) + 1;
+        $dir = new \RecursiveDirectoryIterator($directory);
+        // Prevent UnexpectedValueException "Permission denied" by excluding
+        // directories that are not executable or readable.
+        $dir = new \RecursiveCallbackFilterIterator($dir, function ($current, $key, $iterator) {
+            if ($iterator->isDir() && (!$iterator->isExecutable() || !$iterator->isReadable())) {
+                return false;
+            }
+            return true;
+        });
+        // Follow the same rules than SideloadDir::listDirs, even if empty dirs
+        // may be allowed here.
+        $iterator = new \RecursiveIteratorIterator($dir);
+        $iterator->setMaxDepth($maxDepth);
+        /** @var \SplFileInfo $file */
+        foreach ($iterator as $filepath => $file) {
+            if ($file->isDir()) {
+                if ($this->verifyFileOrDir($file, true)) {
+                    // There are two filepaths for one dirpath: "." and "..".
+                    $filepath = $file->getRealPath();
+                    // Don't list empty directories.
+                    if (!$this->dirHasNoFileAndIsRemovable($filepath)) {
+                        // For security, don't display the full path to the user.
+                        $relativePath = substr($filepath, $lengthDir);
+                        if (!isset($listDirs[$relativePath])) {
+                            // Use keys for quicker process on big directories.
+                            $listDirs[$relativePath] = null;
+                            if ($maxDirectories && ++$countDirs >= $maxDirectories) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        $listDirs = array_keys($listDirs);
+        natcasesort($listDirs);
+        return array_combine($listDirs, $listDirs);
+    }
+
+    /**
+     * Check if a directory, that is valid, contains files or unwriteable content, recursively.
+     *
+     * The directory should be already checked.
+     */
+    private function dirHasNoFileAndIsRemovable(string $dir): bool
+    {
+        /** @var \SplFileInfo $fileinfo */
+        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir)) as $fileinfo) {
+            if (!$fileinfo->isDir()) {
+                return false;
+            }
+            if (!$fileinfo->isExecutable() || !$fileinfo->isReadable() || !$fileinfo->isWritable()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

@@ -20,6 +20,11 @@ class SideloadDir implements IngesterInterface
     protected $directory;
 
     /**
+     * @var string
+     */
+    protected $userDirectory;
+
+    /**
      * @var bool
      */
     protected $deleteFile;
@@ -55,16 +60,24 @@ class SideloadDir implements IngesterInterface
      * @param TempFileFactory $tempFileFactory
      * @param Validator $validator
      * @param int $maxDirectories
+     * @param string $userDirectory
      */
     public function __construct(
         $directory,
         $deleteFile,
         TempFileFactory $tempFileFactory,
         Validator $validator,
-        $maxDirectories
+        $maxDirectories,
+        $userDirectory
     ) {
         // Only work on the resolved real directory path.
         $this->directory = $directory ? realpath($directory) : '';
+        // The user directory is stored as a sub-path of the main directory.
+        // The main directory may have been updated.
+        $userDir = realpath($this->directory . DIRECTORY_SEPARATOR . $userDirectory);
+        $this->userDirectory = $this->directory && mb_strpos($userDirectory, '..') === false && strlen($userDirectory) && is_dir($userDir) && is_readable($userDir)
+            ? $userDir
+            : $this->directory;
         $this->deleteFile = $deleteFile;
         $this->tempFileFactory = $tempFileFactory;
         $this->validator = $validator;
@@ -173,7 +186,10 @@ class SideloadDir implements IngesterInterface
 
     public function form(PhpRenderer $view, array $options = [])
     {
+        $mainDirectory = $this->directory;
+        $this->directory = $this->userDirectory;
         $this->listDirs();
+        $this->directory = $mainDirectory;
 
         $isEmptyDirs = !count($this->listDirs);
         if ($isEmptyDirs) {
