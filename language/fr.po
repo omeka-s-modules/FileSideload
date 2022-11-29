@@ -5,51 +5,56 @@
 # 
 # Translators:
 # Laurent Thomas, 2019
-# Daniel Berthereau <daniel.transifex@berthereau.net>, 2019
 # Judith Hannoun <judith.hannoun@gmail.com>, 2020
+# Daniel Berthereau <daniel.transifex@berthereau.net>, 2022
 # 
 #, fuzzy
 msgid ""
 msgstr ""
-"Last-Translator: Judith Hannoun <judith.hannoun@gmail.com>, 2020\n"
+"Last-Translator: Daniel Berthereau <daniel.transifex@berthereau.net>, 2022\n"
 "Language-Team: French (https://www.transifex.com/omeka/teams/14184/fr/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Language: fr\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Plural-Forms: nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;\n"
 
-#: Module.php:120 Module.php:130 src/Media/Ingester/SideloadDir.php:314
+#: Module.php:124 Module.php:134 src/Media/Ingester/SideloadDir.php:314
 msgid "No ingest directory specified."
-msgstr ""
+msgstr "Aucun dossier source n’a été défini."
 
-#: Module.php:135 src/Media/Ingester/SideloadDir.php:320
+#: Module.php:139 src/Media/Ingester/SideloadDir.php:320
 msgid "Illegal ingest directory specified."
-msgstr ""
+msgstr "Dossier source incorrect."
 
-#: Module.php:150 src/Media/Ingester/SideloadDir.php:334
+#: Module.php:154 src/Media/Ingester/SideloadDir.php:334
 #, php-format
 msgid ""
 "Ingest directory \"%s\" is not writeable but the config requires deletion "
 "after upload."
 msgstr ""
+"Il n’est pas possible d’écrire dans le dossier source « %s », mais les "
+"paramètres de configuration imposent la suppression des fichiers après "
+"téléchargement."
 
-#: Module.php:155 src/Media/Ingester/SideloadDir.php:339
+#: Module.php:159 src/Media/Ingester/SideloadDir.php:339
 #, php-format
 msgid "Invalid ingest directory \"%s\" specified: not a directory"
-msgstr ""
+msgstr "Dossier source incorrect « %s » : ce n’est pas un dossier."
 
-#: Module.php:160 src/Media/Ingester/SideloadDir.php:344
+#: Module.php:164 src/Media/Ingester/SideloadDir.php:344
 #, php-format
 msgid ""
 "Invalid ingest directory \"%s\" specified: incorrect path or insufficient "
 "permissions"
 msgstr ""
+"Dossier source incorrect « %s » : chemin incorrect ou permissions "
+"insuffisantes."
 
-#: Module.php:170
+#: Module.php:174
 #, php-format
 msgid "Ingest directory \"%s\" is empty."
-msgstr ""
+msgstr "Le dossier source « %s » est vide."
 
 #: src/Form/ConfigForm.php:15 src/Media/Ingester/SideloadDir.php:76
 msgid "Sideload directory"
@@ -78,18 +83,18 @@ msgstr ""
 
 #: src/Form/ConfigForm.php:41
 msgid "Maximum number of files to list"
-msgstr ""
+msgstr "Nombre maximal de fichiers à lister"
 
 #: src/Form/ConfigForm.php:52
 msgid "Maximum number of directories to list"
-msgstr ""
+msgstr "Nombre maximal de dossier à lister"
 
 #: src/Form/ConfigForm.php:72
 msgid ""
 "The provided sideload directory is not a directory or does not have "
 "sufficient permissions."
 msgstr ""
-"L'emplacement de chargement indiqué n'est pas un répertoire ou les "
+"L’emplacement de chargement indiqué n’est pas un répertoire, ou les "
 "permissions sont insuffisantes."
 
 #: src/Media/Ingester/Sideload.php:69
@@ -98,7 +103,7 @@ msgstr "Chargement serveur"
 
 #: src/Media/Ingester/Sideload.php:91 src/Media/Ingester/SideloadDir.php:114
 msgid "No ingest filename specified"
-msgstr "Aucun fichier de provenance renseigné"
+msgstr "Aucun fichier source renseigné"
 
 #: src/Media/Ingester/Sideload.php:103
 #, php-format
@@ -106,7 +111,7 @@ msgid ""
 "Cannot sideload file \"%s\". File does not exist or does not have sufficient"
 " permissions"
 msgstr ""
-"Impossible de charger le fichier \"%s\". Le fichier n'existe pas ou les "
+"Impossible de charger le fichier « %s ». Le fichier n’existe pas ou les "
 "permissions sont insuffisantes."
 
 #: src/Media/Ingester/Sideload.php:136
@@ -117,7 +122,7 @@ msgstr ""
 
 #: src/Media/Ingester/Sideload.php:138
 msgid "Select a file to sideload… (only first ones are listed)"
-msgstr ""
+msgstr "Choisissez un fichier à charger… (seuls les premiers sont affichés)"
 
 #: src/Media/Ingester/Sideload.php:140
 msgid "Select a file to sideload…"
@@ -125,7 +130,7 @@ msgstr "Sélectionnez un fichier à charger..."
 
 #: src/Media/Ingester/SideloadDir.php:103
 msgid "No ingest directory specified"
-msgstr ""
+msgstr "Aucun dossier source renseigné"
 
 #: src/Media/Ingester/SideloadDir.php:128
 #, php-format
@@ -133,6 +138,8 @@ msgid ""
 "Cannot sideload file \"%s\". File does not exist or is not inside main "
 "directory or does not have sufficient permissions"
 msgstr ""
+"Impossible de charger le fichier « %s ». Le fichier n’existe pas ou il n’est"
+" pas dans le dossier défini ou les permissions sont insuffisantes."
 
 #: src/Media/Ingester/SideloadDir.php:137
 #, php-format
@@ -140,29 +147,36 @@ msgid ""
 "Cannot sideload file \"%s\": ingestion of directory \"%s\" is not set "
 "recursive"
 msgstr ""
+"Impossible de charger le fichier « %s ». La configuration du dossier « %s » "
+"ne prévoit pas la lecture des sous-dossiers."
 
 #: src/Media/Ingester/SideloadDir.php:180
 msgid "No directory: add directories in the directory or check its path"
 msgstr ""
+"Aucun dossier : ajouter des dossiers dans le dossiers ou vérifier son "
+"chemin."
 
 #: src/Media/Ingester/SideloadDir.php:182
 msgid ""
 "Select a directory to sideload all files inside… (only first ones are "
 "listed)"
 msgstr ""
+"Choisir un dossier pour charger tous ses fichiers… (seuls les premiers sont "
+"affichés)"
 
 #: src/Media/Ingester/SideloadDir.php:184
 msgid "Select a directory to sideload all files inside…"
-msgstr ""
+msgstr "Choisir un dossier pour charger tous ses fichiers…"
 
 #: src/Media/Ingester/SideloadDir.php:190
 msgid "Directory"
-msgstr ""
+msgstr "Dossier"
 
 #: src/Media/Ingester/SideloadDir.php:191
 msgid "Directories and files without sufficient permissions are skipped."
 msgstr ""
+"Les dossiers et fichiers avec des permissions insuffisantes sont ignorés."
 
 #: src/Media/Ingester/SideloadDir.php:203
 msgid "Ingest directory recursively"
-msgstr ""
+msgstr "Charger également les sous-dossiers"
