@@ -25,6 +25,16 @@ class SideloadDir implements IngesterInterface
     protected $deleteFile;
 
     /**
+     * @var bool
+     */
+    protected $modeHardlink;
+
+    /**
+     * @var bool
+     */
+    protected $modeCopy;
+
+    /**
      * @var TempFileFactory
      */
     protected $tempFileFactory;
@@ -55,13 +65,15 @@ class SideloadDir implements IngesterInterface
      * @param TempFileFactory $tempFileFactory
      * @param Validator $validator
      * @param int $maxDirectories
+     * @param string $mode
      */
     public function __construct(
         $directory,
         $deleteFile,
         TempFileFactory $tempFileFactory,
         Validator $validator,
-        $maxDirectories
+        $maxDirectories,
+        $mode
     ) {
         // Only work on the resolved real directory path.
         $this->directory = $directory ? realpath($directory) : '';
@@ -69,6 +81,8 @@ class SideloadDir implements IngesterInterface
         $this->tempFileFactory = $tempFileFactory;
         $this->validator = $validator;
         $this->maxDirectories = $maxDirectories;
+        $this->modeHardlink = $mode === 'hardlink_copy' || $mode === 'hardlink';
+        $this->modeCopy = $mode === 'hardlink_copy' || $mode === 'copy';
     }
 
     public function getLabel()
@@ -146,7 +160,37 @@ class SideloadDir implements IngesterInterface
         $tempFile->setSourceName($data['ingest_filename']);
 
         // Copy the file to a temp path, so it is managed as a real temp file (#14).
-        copy($realPath, $tempFile->getTempPath());
+        $tempPath = $tempFile->getTempPath();
+        $copy = $this->modeCopy;
+        if ($this->modeHardlink) {
+            // Unlike copy, link does not override existing file.
+            @unlink($tempPath);
+            $result = @link($realPath, $tempPath);
+            if ($result) {
+                $copy = false;
+            } elseif (!$copy) {
+                if ($errorStore) {
+                    $message = new Message(
+                        'Error when hard-linking source "%s". Check if it can be hard-linked to the Omeka directory of original files and to the temp directory.', // @translate
+                        $tempFile->getSourceName()
+                    );
+                    $errorStore->addError('file', $message);
+                }
+                return;
+            }
+        }
+
+        if ($copy) {
+            $result = copy($realPath, $tempPath);
+            if (!$result) {
+                $message = new Message(
+                    'Error when copying source "%s". Check paths, rights, and disk space.', // @translate
+                    $tempFile->getSourceName()
+                );
+                $errorStore->addError('file', $message);
+                return;
+            }
+        }
 
         if (!$this->validator->validate($tempFile, $errorStore)) {
             return;
