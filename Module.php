@@ -13,6 +13,10 @@ use Omeka\Stdlib\Message;
 
 class Module extends AbstractModule
 {
+    protected $directory;
+
+    protected $deleteFile;
+
     public function getConfig()
     {
         return include __DIR__ . '/config/module.config.php';
