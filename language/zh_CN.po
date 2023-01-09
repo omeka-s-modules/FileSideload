@@ -17,34 +17,34 @@ msgstr ""
 "Language: zh_CN\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: Module.php:120 Module.php:130 src/Media/Ingester/SideloadDir.php:314
+#: Module.php:124 Module.php:134 src/Media/Ingester/SideloadDir.php:314
 msgid "No ingest directory specified."
 msgstr ""
 
-#: Module.php:135 src/Media/Ingester/SideloadDir.php:320
+#: Module.php:139 src/Media/Ingester/SideloadDir.php:320
 msgid "Illegal ingest directory specified."
 msgstr ""
 
-#: Module.php:150 src/Media/Ingester/SideloadDir.php:334
+#: Module.php:154 src/Media/Ingester/SideloadDir.php:334
 #, php-format
 msgid ""
 "Ingest directory \"%s\" is not writeable but the config requires deletion "
 "after upload."
 msgstr ""
 
-#: Module.php:155 src/Media/Ingester/SideloadDir.php:339
+#: Module.php:159 src/Media/Ingester/SideloadDir.php:339
 #, php-format
 msgid "Invalid ingest directory \"%s\" specified: not a directory"
 msgstr ""
 
-#: Module.php:160 src/Media/Ingester/SideloadDir.php:344
+#: Module.php:164 src/Media/Ingester/SideloadDir.php:344
 #, php-format
 msgid ""
 "Invalid ingest directory \"%s\" specified: incorrect path or insufficient "
 "permissions"
 msgstr ""
 
-#: Module.php:170
+#: Module.php:174
 #, php-format
 msgid "Ingest directory \"%s\" is empty."
 msgstr ""
