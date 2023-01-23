@@ -29,6 +29,7 @@ class Module extends AbstractModule
         $settings->delete('file_sideload_delete_file');
         $settings->delete('file_sideload_max_files');
         $settings->delete('file_sideload_max_directories');
+        $settings->delete('file_sideload_directory_depth_user');
 
         /** @var \Doctrine\DBAL\Connection $connection */
         $connection = $serviceLocator->get('Omeka\Connection');
@@ -78,6 +79,7 @@ class Module extends AbstractModule
             'delete_file' => $settings->get('file_sideload_delete_file', 'no'),
             'filesideload_max_files' => $settings->get('file_sideload_max_files', 1000),
             'filesideload_max_directories' => $settings->get('file_sideload_max_directories', 1000),
+            'filesideload_directory_depth_user' => $settings->get('file_sideload_directory_depth_user', 2),
         ]);
         return $renderer->formCollection($form, false);
     }
@@ -97,6 +99,7 @@ class Module extends AbstractModule
         $settings->set('file_sideload_delete_file', $formData['delete_file']);
         $settings->set('file_sideload_max_files', (int) $formData['filesideload_max_files']);
         $settings->set('file_sideload_max_directories', (int) $formData['filesideload_max_directories']);
+        $settings->set('file_sideload_directory_depth_user', (int) $formData['filesideload_directory_depth_user']);
         return true;
     }
 
@@ -252,12 +255,12 @@ class Module extends AbstractModule
             $userDir = '';
         }
 
-        // Max 2 levels because it is the most common case: one level for the
+        // Default 2 levels because it's the most common case: one level for the
         // user or institution, and when the first is the institution, a second
-        // for the collections or the users. Maybe 3, but no more for now in
-        // order to avoid issues with big directories.
+        // for the collections or the users. Maybe 3, but greater depths may
+        // cause issues with big directories.
         // This option only applies to the user interface anyway.
-        $maxDepth = 2;
+        $maxDepth = (int) $settings->get('file_sideload_directory_depth_user', 2);
         $maxDirs = (int) $settings->get('file_sideload_max_directories');
         $directories = $mainDirectory ? $this->listDirs($mainDirectory, $maxDepth, $maxDirs) : [];
 

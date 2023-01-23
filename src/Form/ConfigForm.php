@@ -56,6 +56,17 @@ class ConfigForm extends Form
                 'min' => 0,
             ],
         ]);
+        $this->add([
+            'type' => 'number',
+            'name' => 'filesideload_directory_depth_user',
+            'options' => [
+                'label' => 'Max directory depth for user setting', // @translate
+            ],
+            'attributes' => [
+                'id' => 'filesideload-directory-depth-user',
+                'min' => 0,
+            ],
+        ]);
 
         $inputFilter = $this->getInputFilter();
         $inputFilter->add([
