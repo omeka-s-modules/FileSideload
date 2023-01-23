@@ -270,7 +270,7 @@ class Module extends AbstractModule
                 'name' => 'filesideload_user_dir',
                 'type' => \Laminas\Form\Element\Select::class,
                 'options' => [
-                    'label' => 'Server directory', // @translate
+                    'label' => 'User directory', // @translate
                     'empty_option' => '',
                     'value_options' => $directories,
                 ],
