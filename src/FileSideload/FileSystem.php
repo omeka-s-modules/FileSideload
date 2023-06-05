@@ -20,19 +20,31 @@ class FileSystem
     protected $maxDirectories;
 
     /**
+     * @var int
+     */
+    protected $maxFiles;
+
+    /**
      * @var bool
      */
     private $hasMoreDirectories = false;
 
+    /**
+     * @var bool
+     */
+    private $hasMoreFiles = false;
+
     public function __construct(
         ?string $sideloadDirectory,
         bool $deleteFile,
-        int $maxDirectories
+        int $maxDirectories,
+        int $maxFiles
     ) {
         // Only work on the resolved real directory path.
         $this->sideloadDirectory = $sideloadDirectory ? realpath($sideloadDirectory) : '';
         $this->deleteFile = $deleteFile;
         $this->maxDirectories = $maxDirectories;
+        $this->maxFiles = $maxDirectories;
     }
 
     /**
@@ -70,7 +82,6 @@ class FileSystem
         int $maxDepth = -1,
         ?int $maxDirs = null
     ): array {
-        $listDirs = [];
         $this->hasMoreDirectories = false;
 
         $dir = new \SplFileInfo($directory);
@@ -78,6 +89,7 @@ class FileSystem
             return [];
         }
 
+        $listDirs = [];
         $countDirs = 0;
         $lengthDir = strlen($this->sideloadDirectory) + 1;
         $maxDirs ??= $this->maxDirectories;
@@ -130,14 +142,19 @@ class FileSystem
      *
      * @return array List of filepaths relative to the main directory.
      */
-    public function listFiles(string $directory, bool $recursive = false): array
-    {
+    public function listFiles(
+        string $directory,
+        bool $recursive = false,
+        ?int $maxFiles = null
+    ): array {
+        $this->hasMoreFiles = false;
+
         $dir = new \SplFileInfo($directory);
         if (!$dir->isDir() || !$dir->isReadable() || !$dir->isExecutable()) {
             return [];
         }
 
-        // Check if the dir is inside main directory: don't import root files.
+        // Check if the dir is inside main directory.
         $directory = $this->verifyFileOrDir($dir, true);
         if (is_null($directory)) {
             return [];
@@ -147,7 +164,9 @@ class FileSystem
 
         // To simplify sort.
         $listRootFiles = [];
+        $count = 0;
         $lengthDir = strlen($this->sideloadDirectory) + 1;
+        $maxFiles ??= $this->maxFiles;
 
         if ($recursive) {
             $dir = new \RecursiveDirectoryIterator($directory);
@@ -166,9 +185,15 @@ class FileSystem
                     // For security, don't display the full path to the user.
                     $relativePath = substr($filepath, $lengthDir);
                     // Use keys for quicker process on big directories.
-                    $listFiles[$relativePath] = null;
-                    if (pathinfo($filepath, PATHINFO_DIRNAME) === $directory) {
-                        $listRootFiles[$relativePath] = null;
+                    if (!array_key_exists($relativePath, $listFiles)) {
+                        $listFiles[$relativePath] = null;
+                        if (pathinfo($filepath, PATHINFO_DIRNAME) === $directory) {
+                            $listRootFiles[$relativePath] = null;
+                        }
+                        if ($maxFiles && ++$count >= $maxFiles) {
+                            $this->hasMoreFiles = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -182,6 +207,10 @@ class FileSystem
                     $relativePath = substr($filepath, $lengthDir);
                     // Use keys for quicker process on big directories.
                     $listFiles[$relativePath] = null;
+                    if ($maxFiles && ++$count >= $maxFiles) {
+                        $this->hasMoreFiles = true;
+                        break;
+                    }
                 }
             }
         }
@@ -197,6 +226,11 @@ class FileSystem
     public function hasMoreDirectories(): bool
     {
         return $this->hasMoreDirectories;
+    }
+
+    public function hasMoreFiles(): bool
+    {
+        return $this->hasMoreFiles;
     }
 
     /**
@@ -218,9 +252,6 @@ class FileSystem
         }
         $realPath = $fileinfo->getRealPath();
         if (false === $realPath) {
-            return null;
-        }
-        if ($realPath === $checkDir) {
             return null;
         }
         if (0 !== strpos($realPath, $checkDir)) {

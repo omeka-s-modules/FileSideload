@@ -44,21 +44,10 @@ class Sideload implements IngesterInterface
     protected $fileSystem;
 
     /**
-     * @var int
-     */
-    protected $maxFiles;
-
-    /**
-     * @var bool
-     */
-    protected $hasMoreFiles = false;
-
-    /**
      * @param string $directory
      * @param bool $deleteFile
      * @param TempFileFactory $tempFileFactory
      * @param Validator $validator
-     * @param int $maxFiles
      * @param string $userDirectory
      * @param FileSystem $fileSystem
      */
@@ -67,7 +56,6 @@ class Sideload implements IngesterInterface
         $deleteFile,
         TempFileFactory $tempFileFactory,
         Validator $validator,
-        $maxFiles,
         $userDirectory,
         FileSystem $fileSystem
     ) {
@@ -82,7 +70,6 @@ class Sideload implements IngesterInterface
         $this->deleteFile = $deleteFile;
         $this->tempFileFactory = $tempFileFactory;
         $this->validator = $validator;
-        $this->maxFiles = $maxFiles;
         $this->fileSystem = $fileSystem;
     }
 
@@ -151,22 +138,25 @@ class Sideload implements IngesterInterface
 
     public function form(PhpRenderer $view, array $options = [])
     {
+        $listFiles = $this->fileSystem->listFiles($this->userDirectory, true);
+        $hasMoreFiles = $this->fileSystem->hasMoreFiles();
+
         // When the user dir is different from the main dir, prepend the main
         // dir path to simplify hydration.
-        $prependPath = $this->userDirectory === $this->directory
-            ? ''
-            : mb_substr($this->userDirectory, mb_strlen($this->directory) + 1) . DIRECTORY_SEPARATOR;
+        if ($this->userDirectory !== $this->directory) {
+            $prependPath = mb_substr($this->userDirectory, mb_strlen($this->directory) + 1) . DIRECTORY_SEPARATOR;
+            $length = mb_strlen($prependPath);
+            $result = [];
+            foreach ($listFiles as $file) {
+                $result[$file] = mb_substr($file, $length);
+            }
+            $listFiles = $result;
+        }
 
-        $mainDirectory = $this->directory;
-        $this->directory = $this->userDirectory;
-        $files = $this->getFiles($prependPath);
-        $this->directory = $mainDirectory;
-
-        $isEmpty = empty($files);
-
-        if ($isEmpty) {
+        $isEmptyFiles = !count($listFiles);
+        if ($isEmptyFiles) {
             $emptyOption = 'No file: add files in the directory or check its path'; // @translate
-        } elseif ($this->hasMoreFiles) {
+        } elseif ($hasMoreFiles) {
             $emptyOption = 'Select a file to sideload… (only first ones are listed)'; // @translate
         } else {
             $emptyOption = 'Select a file to sideload…'; // @translate
@@ -175,7 +165,7 @@ class Sideload implements IngesterInterface
         $select = new Select('o:media[__index__][ingest_filename]');
         $select->setOptions([
             'label' => 'File', // @translate
-            'value_options' => $files,
+            'value_options' => $listFiles,
             'empty_option' => '',
         ]);
         $select->setAttributes([
@@ -187,57 +177,5 @@ class Sideload implements IngesterInterface
         return $view->formRow($select)
             // Ideally should be in a js file of the module or Omeka.
             . '<script>$(".media-sideload-select").chosen(window.chosenOptions);</script>';
-    }
-
-    /**
-     * Get all files available to sideload.
-     *
-     * @return array
-     */
-    public function getFiles(string $prependPath = '')
-    {
-        $files = [];
-        $count = 0;
-        $dir = new \SplFileInfo($this->directory);
-        if ($dir->isDir()) {
-            $lengthDir = strlen($this->directory) + 1;
-            $dir = new \RecursiveDirectoryIterator($this->directory);
-            // Prevent UnexpectedValueException "Permission denied" by excluding
-            // directories that are not executable or readable.
-            $dir = new \RecursiveCallbackFilterIterator($dir, function ($current, $key, $iterator) {
-                if ($iterator->isDir() && (!$iterator->isExecutable() || !$iterator->isReadable())) {
-                    return false;
-                }
-                return true;
-            });
-            $iterator = new \RecursiveIteratorIterator($dir);
-            foreach ($iterator as $filepath => $file) {
-                if ($this->fileSystem->verifyFileOrDir($file)) {
-                    // For security, don't display the full path to the user.
-                    $relativePath = substr($filepath, $lengthDir);
-                    $files[$prependPath . $relativePath] = $relativePath;
-                    if ($this->maxFiles && ++$count >= $this->maxFiles) {
-                        $this->hasMoreFiles = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        // Don't mix directories and files, but list directories first as usual.
-        $alphabeticAndDirFirst = function ($a, $b) {
-            if ($a === $b) {
-                return 0;
-            }
-            $aInRoot = strpos($a, '/') === false;
-            $bInRoot = strpos($b, '/') === false;
-            if (($aInRoot && $bInRoot) || (!$aInRoot && !$bInRoot)) {
-                return strcasecmp($a, $b);
-            }
-            return $bInRoot ? -1 : 1;
-        };
-        uasort($files, $alphabeticAndDirFirst);
-
-        return $files;
     }
 }

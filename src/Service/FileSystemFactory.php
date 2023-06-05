@@ -14,7 +14,8 @@ class FileSystemFactory implements FactoryInterface
         return new FileSystem(
             $settings->get('file_sideload_directory'),
             $settings->get('file_sideload_delete_file') === 'yes',
-            (int) $settings->get('file_sideload_max_directories')
+            (int) $settings->get('file_sideload_max_directories'),
+            (int) $settings->get('file_sideload_max_files')
         );
     }
 }
