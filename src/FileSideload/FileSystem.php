@@ -19,6 +19,11 @@ class FileSystem
      */
     protected $maxDirectories;
 
+    /**
+     * @var bool
+     */
+    private $hasMoreDirectories = false;
+
     public function __construct(
         ?string $sideloadDirectory,
         bool $deleteFile,
@@ -66,6 +71,7 @@ class FileSystem
         ?int $maxDirs = null
     ): array {
         $listDirs = [];
+        $this->hasMoreDirectories = false;
 
         $dir = new \SplFileInfo($directory);
         if (!$dir->isDir()) {
@@ -94,7 +100,7 @@ class FileSystem
         /** @var \SplFileInfo $file */
         foreach ($iterator as $filepath => $file) {
             if ($file->isDir()) {
-                if ($this->verifyFileOrDir($file, true, $directory)) {
+                if (!$this->hasMoreDirectories && $this->verifyFileOrDir($file, true, $directory)) {
                     // There are two filepaths for one dirpath: "." and "..".
                     $filepath = $file->getRealPath();
                     // Don't list empty directories.
@@ -105,6 +111,7 @@ class FileSystem
                         if (!array_key_exists($relativePath, $listDirs)) {
                             $listDirs[$relativePath] = null;
                             if ($maxDirs && ++$countDirs >= $maxDirs) {
+                                $this->hasMoreDirectories = true;
                                 break;
                             }
                         }
@@ -116,6 +123,11 @@ class FileSystem
         $listDirs = array_keys($listDirs);
         natcasesort($listDirs);
         return $listDirs;
+    }
+
+    public function hasMoreDirectories(): bool
+    {
+        return $this->hasMoreDirectories;
     }
 
     /**
