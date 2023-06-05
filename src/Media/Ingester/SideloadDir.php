@@ -2,6 +2,9 @@
 
 namespace FileSideload\Media\Ingester;
 
+use FileSideload\FileSideload\FileSystem;
+use Laminas\Form\Element;
+use Laminas\View\Renderer\PhpRenderer;
 use Omeka\Api\Request;
 use Omeka\Entity\Media;
 use Omeka\File\TempFileFactory;
@@ -9,8 +12,6 @@ use Omeka\File\Validator;
 use Omeka\Media\Ingester\IngesterInterface;
 use Omeka\Stdlib\ErrorStore;
 use Omeka\Stdlib\Message;
-use Laminas\Form\Element;
-use Laminas\View\Renderer\PhpRenderer;
 
 class SideloadDir implements IngesterInterface
 {
@@ -40,6 +41,11 @@ class SideloadDir implements IngesterInterface
     protected $validator;
 
     /**
+     * @var FileSystem
+     */
+    protected $fileSystem;
+
+    /**
      * @var int
      */
     protected $maxDirectories;
@@ -61,6 +67,7 @@ class SideloadDir implements IngesterInterface
      * @param Validator $validator
      * @param int $maxDirectories
      * @param string $userDirectory
+     * @param FileSystem $fileSystem
      */
     public function __construct(
         $directory,
@@ -68,7 +75,8 @@ class SideloadDir implements IngesterInterface
         TempFileFactory $tempFileFactory,
         Validator $validator,
         $maxDirectories,
-        $userDirectory
+        $userDirectory,
+        FileSystem $fileSystem
     ) {
         // Only work on the resolved real directory path.
         $this->directory = $directory ? realpath($directory) : '';
@@ -81,6 +89,7 @@ class SideloadDir implements IngesterInterface
         $this->deleteFile = $deleteFile;
         $this->tempFileFactory = $tempFileFactory;
         $this->validator = $validator;
+        $this->fileSystem = $fileSystem;
         $this->maxDirectories = $maxDirectories;
     }
 
@@ -177,7 +186,7 @@ class SideloadDir implements IngesterInterface
         unlink($realPath);
 
         // Check if this is the last file of the ingest directory.
-        if (!$this->dirHasNoFileAndIsRemovable($realIngestDirectory)) {
+        if (!$this->fileSystem->dirHasNoFileAndIsRemovable($realIngestDirectory)) {
             return;
         }
         // The ingest directory may have empty directories, so recursive remove it.
@@ -270,7 +279,7 @@ class SideloadDir implements IngesterInterface
                     // There are two filepaths for one dirpath: "." and "..".
                     $filepath = $file->getRealPath();
                     // Don't list empty directories.
-                    if (!$this->dirHasNoFileAndIsRemovable($filepath)) {
+                    if (!$this->fileSystem->dirHasNoFileAndIsRemovable($filepath)) {
                         // For security, don't display the full path to the user.
                         $relativePath = substr($filepath, $lengthDir);
                         if (!isset($this->listDirs[$prependPath . $relativePath])) {
@@ -372,25 +381,6 @@ class SideloadDir implements IngesterInterface
         }
 
         return $directory;
-    }
-
-    /**
-     * Check if a directory, that is valid, contains files or unwriteable content, recursively.
-     *
-     * The directory should be already checked.
-     */
-    private function dirHasNoFileAndIsRemovable(string $dir): bool
-    {
-        /** @var \SplFileInfo $fileinfo */
-        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir)) as $fileinfo) {
-            if (!$fileinfo->isDir()) {
-                return false;
-            }
-            if (!$fileinfo->isExecutable() || !$fileinfo->isReadable() || !$fileinfo->isWritable()) {
-                return false;
-            }
-        }
-        return true;
     }
 
     /**

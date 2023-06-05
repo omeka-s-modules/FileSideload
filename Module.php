@@ -454,6 +454,9 @@ HTML;
             return [];
         }
 
+        $services = $this->getServiceLocator();
+        $fileSystem = $services->get('FileSideload\FileSystem');
+
         $countDirs = 0;
         $this->directory = $directory;
 
@@ -478,7 +481,7 @@ HTML;
                     // There are two filepaths for one dirpath: "." and "..".
                     $filepath = $file->getRealPath();
                     // Don't list empty directories.
-                    if (!$this->dirHasNoFileAndIsRemovable($filepath)) {
+                    if (!$fileSystem->dirHasNoFileAndIsRemovable($filepath)) {
                         // For security, don't display the full path to the user.
                         $relativePath = substr($filepath, $lengthDir);
                         if (!isset($listDirs[$relativePath])) {
@@ -496,25 +499,6 @@ HTML;
         $listDirs = array_keys($listDirs);
         natcasesort($listDirs);
         return array_combine($listDirs, $listDirs);
-    }
-
-    /**
-     * Check if a directory, that is valid, contains files or unwriteable content, recursively.
-     *
-     * The directory should be already checked.
-     */
-    private function dirHasNoFileAndIsRemovable(string $dir): bool
-    {
-        /** @var \SplFileInfo $fileinfo */
-        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir)) as $fileinfo) {
-            if (!$fileinfo->isDir()) {
-                return false;
-            }
-            if (!$fileinfo->isExecutable() || !$fileinfo->isReadable() || !$fileinfo->isWritable()) {
-                return false;
-            }
-        }
-        return true;
     }
 
     /**
