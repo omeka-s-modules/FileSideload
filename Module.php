@@ -225,9 +225,6 @@ class Module extends AbstractModule
     {
         /** @var \Omeka\Form\UserForm $form */
         $form = $event->getTarget();
-        if ($form->getOption('is_public')) {
-            return;
-        }
 
         /**
          * @var \Omeka\Entity\User $user
