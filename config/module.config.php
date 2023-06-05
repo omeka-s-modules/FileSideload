@@ -5,8 +5,8 @@ use Osii\Service\MediaIngesterMapper\MediaIngesterMapperFactory;
 
 return [
     'service_manager' => [
-        'invokables' => [
-            'FileSideload\FileSystem' => FileSideload\FileSystem::class,
+        'factories' => [
+            'FileSideload\FileSystem' => Service\FileSystemFactory::class,
         ],
     ],
     'media_ingesters' => [

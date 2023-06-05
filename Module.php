@@ -13,8 +13,14 @@ use Omeka\Stdlib\Message;
 
 class Module extends AbstractModule
 {
+    /**
+     * @var string
+     */
     protected $directory;
 
+    /**
+     * @var bool
+     */
     protected $deleteFile;
 
     public function getConfig()
@@ -114,9 +120,11 @@ class Module extends AbstractModule
             return;
         }
 
+        $services = $this->getServiceLocator();
+
         if (is_null($isChecked)) {
             $isChecked = false;
-            $settings = $this->getServiceLocator()->get('Omeka\Settings');
+            $settings = $services->get('Omeka\Settings');
             $mainDir = (string) $settings->get('file_sideload_directory', '');
             if (!strlen($mainDir)) {
                 return;
@@ -143,6 +151,9 @@ class Module extends AbstractModule
         }
 
         $errorStore = $event->getParam('errorStore');
+
+        /** @var \FileSideload\FileSideload\FileSystem $fileSystem */
+        $fileSystem = $services->get('FileSideload\FileSystem');
 
         $newDataMedias = [];
         foreach ($data['o:media'] as $dataMedia) {
@@ -177,7 +188,7 @@ class Module extends AbstractModule
                 ? $ingestDirectory
                 : $this->directory . DIRECTORY_SEPARATOR . $ingestDirectory;
             $fileinfo = new \SplFileInfo($directory);
-            $directory = $this->verifyFileOrDir($fileinfo, true);
+            $directory = $fileSystem->verifyFileOrDir($fileinfo, true);
 
             if (is_null($directory)) {
                 // Set a clearer message in some cases.
@@ -228,10 +239,12 @@ class Module extends AbstractModule
 
         /**
          * @var \Omeka\Entity\User $user
+         * @var \FileSideload\FileSideload\FileSystem $fileSystem
          */
         $services = $this->getServiceLocator();
         $settings = $services->get('Omeka\Settings');
         $entityManager = $services->get('Omeka\EntityManager');
+        $fileSystem = $services->get('FileSideload\FileSystem');
 
         // The user is not the current user, but the user in the form.
         // It may be empty for a new user.
@@ -259,7 +272,12 @@ class Module extends AbstractModule
         // This option only applies to the user interface anyway.
         $maxDepth = (int) $settings->get('file_sideload_directory_depth_user', 2);
         $maxDirs = (int) $settings->get('file_sideload_max_directories');
-        $directories = $mainDirectory ? $this->listDirs($mainDirectory, $maxDepth, $maxDirs) : [];
+        if ($mainDirectory) {
+            $directories = $fileSystem->listDirs($mainDirectory, $maxDepth, $maxDirs);
+            $directories = array_combine($directories, $directories);
+        } else {
+            $directories = [];
+        }
 
         $fieldset = $form->get('user-settings');
         $fieldset
@@ -385,8 +403,11 @@ HTML;
             return [];
         }
 
+        /** @var \FileSideload\FileSideload\FileSystem $fileSystem */
+        $fileSystem = $this->getServiceLocator()->get('FileSideload\FileSystem');
+
         // Check if the dir is inside main directory: don't import root files.
-        $directory = $this->verifyFileOrDir($dir, true);
+        $directory = $fileSystem->verifyFileOrDir($dir, true);
         if (is_null($directory)) {
             return [];
         }
@@ -410,7 +431,7 @@ HTML;
             $iterator = new \RecursiveIteratorIterator($dir);
             /** @var \SplFileInfo $file */
             foreach ($iterator as $filepath => $file) {
-                if ($this->verifyFileOrDir($file)) {
+                if ($fileSystem->verifyFileOrDir($file)) {
                     // For security, don't display the full path to the user.
                     $relativePath = substr($filepath, $lengthDir);
                     // Use keys for quicker process on big directories.
@@ -424,7 +445,7 @@ HTML;
             $iterator = new \DirectoryIterator($directory);
             /** @var \DirectoryIterator $file */
             foreach ($iterator as $file) {
-                $filepath = $this->verifyFileOrDir($file);
+                $filepath = $fileSystem->verifyFileOrDir($file);
                 if (!is_null($filepath)) {
                     // For security, don't display the full path to the user.
                     $relativePath = substr($filepath, $lengthDir);
@@ -440,107 +461,5 @@ HTML;
         $listRootFiles = array_keys($listRootFiles);
         natcasesort($listRootFiles);
         return array_values(array_unique(array_merge($listRootFiles, $listFiles)));
-    }
-
-    /**
-     * Get all directories available to sideload.
-     */
-    protected function listDirs(string $directory, int $maxDepth = -1, int $maxDirectories = 0): array
-    {
-        $listDirs = [];
-
-        $dir = new \SplFileInfo($directory);
-        if (!$dir->isDir()) {
-            return [];
-        }
-
-        $services = $this->getServiceLocator();
-        $fileSystem = $services->get('FileSideload\FileSystem');
-
-        $countDirs = 0;
-        $this->directory = $directory;
-
-        $lengthDir = strlen($directory) + 1;
-        $dir = new \RecursiveDirectoryIterator($directory);
-        // Prevent UnexpectedValueException "Permission denied" by excluding
-        // directories that are not executable or readable.
-        $dir = new \RecursiveCallbackFilterIterator($dir, function ($current, $key, $iterator) {
-            if ($iterator->isDir() && (!$iterator->isExecutable() || !$iterator->isReadable())) {
-                return false;
-            }
-            return true;
-        });
-        // Follow the same rules than SideloadDir::listDirs, even if empty dirs
-        // may be allowed here.
-        $iterator = new \RecursiveIteratorIterator($dir);
-        $iterator->setMaxDepth($maxDepth);
-        /** @var \SplFileInfo $file */
-        foreach ($iterator as $filepath => $file) {
-            if ($file->isDir()) {
-                if ($this->verifyFileOrDir($file, true)) {
-                    // There are two filepaths for one dirpath: "." and "..".
-                    $filepath = $file->getRealPath();
-                    // Don't list empty directories.
-                    if (!$fileSystem->dirHasNoFileAndIsRemovable($filepath)) {
-                        // For security, don't display the full path to the user.
-                        $relativePath = substr($filepath, $lengthDir);
-                        if (!isset($listDirs[$relativePath])) {
-                            // Use keys for quicker process on big directories.
-                            $listDirs[$relativePath] = null;
-                            if ($maxDirectories && ++$countDirs >= $maxDirectories) {
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        $listDirs = array_keys($listDirs);
-        natcasesort($listDirs);
-        return array_combine($listDirs, $listDirs);
-    }
-
-    /**
-     * Verify the passed file or directory.
-     *
-     * Working off the "real" base directory and "real" filepath: both must
-     * exist and have sufficient permissions; the filepath must begin with the
-     * base directory path to avoid problems with symlinks; the base directory
-     * must be server-writable to delete the file; and the file must be a
-     * readable regular file or directory.
-     *
-     * @param \SplFileInfo $fileinfo
-     * @return string|null The real file path or null if the file is invalid.
-     */
-    protected function verifyFileOrDir(\SplFileInfo $fileinfo, bool $isDir = false): ?string
-    {
-        if (false === $this->directory) {
-            return null;
-        }
-        $realPath = $fileinfo->getRealPath();
-        if (false === $realPath) {
-            return null;
-        }
-        if ($realPath === $this->directory) {
-            return null;
-        }
-        if (0 !== strpos($realPath, $this->directory)) {
-            return null;
-        }
-        if ($this->deleteFile && !$fileinfo->getPathInfo()->isWritable()) {
-            return null;
-        }
-        if (!$fileinfo->isReadable()) {
-            return null;
-        }
-        if ($isDir) {
-            if (!$fileinfo->isDir() || !$fileinfo->isExecutable()) {
-                return null;
-            }
-        } elseif (!$fileinfo->isFile()) {
-            return null;
-        }
-        return $realPath;
     }
 }
