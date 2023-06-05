@@ -1,14 +1,15 @@
 <?php
 namespace FileSideload\Media\Ingester;
 
+use FileSideload\FileSideload\FileSystem;
+use Laminas\Form\Element\Select;
+use Laminas\View\Renderer\PhpRenderer;
 use Omeka\Api\Request;
 use Omeka\Entity\Media;
 use Omeka\File\TempFileFactory;
 use Omeka\File\Validator;
 use Omeka\Media\Ingester\IngesterInterface;
 use Omeka\Stdlib\ErrorStore;
-use Laminas\Form\Element\Select;
-use Laminas\View\Renderer\PhpRenderer;
 
 class Sideload implements IngesterInterface
 {
@@ -38,6 +39,11 @@ class Sideload implements IngesterInterface
     protected $validator;
 
     /**
+     * @var FileSystem
+     */
+    protected $fileSystem;
+
+    /**
      * @var int
      */
     protected $maxFiles;
@@ -54,6 +60,7 @@ class Sideload implements IngesterInterface
      * @param Validator $validator
      * @param int $maxFiles
      * @param string $userDirectory
+     * @param FileSystem $fileSystem
      */
     public function __construct(
         $directory,
@@ -61,7 +68,8 @@ class Sideload implements IngesterInterface
         TempFileFactory $tempFileFactory,
         Validator $validator,
         $maxFiles,
-        $userDirectory
+        $userDirectory,
+        FileSystem $fileSystem
     ) {
         // Only work on the resolved real directory path.
         $this->directory = $directory ? realpath($directory) : '';
@@ -75,6 +83,7 @@ class Sideload implements IngesterInterface
         $this->tempFileFactory = $tempFileFactory;
         $this->validator = $validator;
         $this->maxFiles = $maxFiles;
+        $this->fileSystem = $fileSystem;
     }
 
     public function getLabel()
@@ -110,8 +119,8 @@ class Sideload implements IngesterInterface
             ? $data['ingest_filename']
             : $this->directory . DIRECTORY_SEPARATOR . $data['ingest_filename'];
         $fileinfo = new \SplFileInfo($filepath);
-        $realPath = $this->verifyFile($fileinfo);
-        if (false === $realPath) {
+        $realPath = $this->fileSystem->verifyFileOrDir($fileinfo);
+        if (null === $realPath) {
             $errorStore->addError('ingest_filename', sprintf(
                 'Cannot sideload file "%s". File does not exist or does not have sufficient permissions', // @translate
                 $filepath
@@ -203,7 +212,7 @@ class Sideload implements IngesterInterface
             });
             $iterator = new \RecursiveIteratorIterator($dir);
             foreach ($iterator as $filepath => $file) {
-                if ($this->verifyFile($file)) {
+                if ($this->fileSystem->verifyFileOrDir($file)) {
                     // For security, don't display the full path to the user.
                     $relativePath = substr($filepath, $lengthDir);
                     $files[$prependPath . $relativePath] = $relativePath;
@@ -230,38 +239,5 @@ class Sideload implements IngesterInterface
         uasort($files, $alphabeticAndDirFirst);
 
         return $files;
-    }
-
-    /**
-     * Verify the passed file.
-     *
-     * Working off the "real" base directory and "real" filepath: both must
-     * exist and have sufficient permissions; the filepath must begin with the
-     * base directory path to avoid problems with symlinks; the base directory
-     * must be server-writable to delete the file; and the file must be a
-     * readable regular file.
-     *
-     * @param \SplFileInfo $fileinfo
-     * @return string|false The real file path or false if the file is invalid
-     */
-    public function verifyFile(\SplFileInfo $fileinfo)
-    {
-        if (false === $this->directory) {
-            return false;
-        }
-        $realPath = $fileinfo->getRealPath();
-        if (false === $realPath) {
-            return false;
-        }
-        if (0 !== strpos($realPath, $this->directory)) {
-            return false;
-        }
-        if ($this->deleteFile && !$fileinfo->getPathInfo()->isWritable()) {
-            return false;
-        }
-        if (!$fileinfo->isFile() || !$fileinfo->isReadable()) {
-            return false;
-        }
-        return $realPath;
     }
 }
