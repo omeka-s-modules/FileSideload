@@ -339,17 +339,31 @@ class Module extends AbstractModule
     {
         $view = $event->getTarget();
         $user = $view->resource;
-        $this->viewUserData($view, $user);
+        $html = <<<'HTML'
+<div class="meta-group">
+    <h4>%1$s</h4>
+    <div class="value">%2$s</div>
+</div>
+
+HTML;
+        $this->viewUserData($view, $user, $html);
     }
 
     public function viewUserShowAfter(Event $event): void
     {
         $view = $event->getTarget();
         $user = $view->vars()->user;
-        $this->viewUserData($view, $user);
+        $html = <<<'HTML'
+<div class="property">
+    <dt>%1$s</dt>
+    <dd class="value">%2$s</dd>
+</div>
+
+HTML;
+        $this->viewUserData($view, $user, $html);
     }
 
-    protected function viewUserData(PhpRenderer $view, UserRepresentation $user): void
+    protected function viewUserData(PhpRenderer $view, UserRepresentation $user, string $html): void
     {
         $services = $this->getServiceLocator();
         $userSettings = $services->get('Omeka\Settings\User');
@@ -359,15 +373,6 @@ class Module extends AbstractModule
         $userDirectory = $userSettings->get('filesideload_user_dir', '');
         $userDir = strlen($userDirectory) ? $userDirectory : $view->translate('[root]'); // @translate
 
-        $html = <<<'HTML'
-<div class="property">
-    <h4>%1$s</h4>
-    <div class="value">
-        %2$s
-    </div>
-</div>
-
-HTML;
         echo sprintf($html, $label, $userDir);
     }
 
