@@ -211,7 +211,7 @@ class Module extends AbstractModule
                 continue;
             }
 
-            $listFiles = $this->listFiles($directory, !empty($dataMedia['ingest_directory_recursively']));
+            $listFiles = $fileSystem->listFiles($directory, !empty($dataMedia['ingest_directory_recursively']));
             if (!count($listFiles)) {
                 $errorStore->addError('ingest_directory', new Message(
                     'Ingest directory "%s" is empty.',  // @translate
@@ -389,77 +389,5 @@ HTML;
         $userDir = strlen($userDirectory) ? $userDirectory : $view->translate('[root]'); // @translate
 
         echo sprintf($html, $label, $userDir);
-    }
-
-    /**
-     * Get all files available to sideload from a directory inside the main dir.
-     *
-     * @return array List of filepaths relative to the main directory.
-     */
-    protected function listFiles(string $directory, bool $recursive = false): array
-    {
-        $dir = new \SplFileInfo($directory);
-        if (!$dir->isDir() || !$dir->isReadable() || !$dir->isExecutable()) {
-            return [];
-        }
-
-        /** @var \FileSideload\FileSideload\FileSystem $fileSystem */
-        $fileSystem = $this->getServiceLocator()->get('FileSideload\FileSystem');
-
-        // Check if the dir is inside main directory: don't import root files.
-        $directory = $fileSystem->verifyFileOrDir($dir, true);
-        if (is_null($directory)) {
-            return [];
-        }
-
-        $listFiles = [];
-
-        // To simplify sort.
-        $listRootFiles = [];
-
-        $lengthDir = strlen($this->directory) + 1;
-        if ($recursive) {
-            $dir = new \RecursiveDirectoryIterator($directory);
-            // Prevent UnexpectedValueException "Permission denied" by excluding
-            // directories that are not executable or readable.
-            $dir = new \RecursiveCallbackFilterIterator($dir, function ($current, $key, $iterator) {
-                if ($iterator->isDir() && (!$iterator->isExecutable() || !$iterator->isReadable())) {
-                    return false;
-                }
-                return true;
-            });
-            $iterator = new \RecursiveIteratorIterator($dir);
-            /** @var \SplFileInfo $file */
-            foreach ($iterator as $filepath => $file) {
-                if ($fileSystem->verifyFileOrDir($file)) {
-                    // For security, don't display the full path to the user.
-                    $relativePath = substr($filepath, $lengthDir);
-                    // Use keys for quicker process on big directories.
-                    $listFiles[$relativePath] = null;
-                    if (pathinfo($filepath, PATHINFO_DIRNAME) === $directory) {
-                        $listRootFiles[$relativePath] = null;
-                    }
-                }
-            }
-        } else {
-            $iterator = new \DirectoryIterator($directory);
-            /** @var \DirectoryIterator $file */
-            foreach ($iterator as $file) {
-                $filepath = $fileSystem->verifyFileOrDir($file);
-                if (!is_null($filepath)) {
-                    // For security, don't display the full path to the user.
-                    $relativePath = substr($filepath, $lengthDir);
-                    // Use keys for quicker process on big directories.
-                    $listFiles[$relativePath] = null;
-                }
-            }
-        }
-
-        // Don't mix directories and files. List root files, then sub-directories.
-        $listFiles = array_keys($listFiles);
-        natcasesort($listFiles);
-        $listRootFiles = array_keys($listRootFiles);
-        natcasesort($listRootFiles);
-        return array_values(array_unique(array_merge($listRootFiles, $listFiles)));
     }
 }
