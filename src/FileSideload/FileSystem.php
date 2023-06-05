@@ -143,17 +143,18 @@ class FileSystem
      */
     public function verifyFileOrDir(\SplFileInfo $fileinfo, bool $isDir = false, ?string $baseDir = null): ?string
     {
-        if (false === ($baseDir ?? $this->sideloadDirectory)) {
+        $checkDir = $baseDir === null || $baseDir === '' ? $this->sideloadDirectory : $baseDir;
+        if (false === $checkDir) {
             return null;
         }
         $realPath = $fileinfo->getRealPath();
         if (false === $realPath) {
             return null;
         }
-        if ($realPath === ($baseDir ?? $this->sideloadDirectory)) {
+        if ($realPath === $checkDir) {
             return null;
         }
-        if (0 !== strpos($realPath, ($baseDir ?? $this->sideloadDirectory))) {
+        if (0 !== strpos($realPath, $checkDir)) {
             return null;
         }
         if ($this->deleteFile && !$fileinfo->getPathInfo()->isWritable()) {

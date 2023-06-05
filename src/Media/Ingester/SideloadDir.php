@@ -46,26 +46,10 @@ class SideloadDir implements IngesterInterface
     protected $fileSystem;
 
     /**
-     * @var int
-     */
-    protected $maxDirectories;
-
-    /**
-     * @var array
-     */
-    protected $listDirs = [];
-
-    /**
-     * @var bool
-     */
-    protected $hasMoreDirs = false;
-
-    /**
      * @param string $directory
      * @param bool $deleteFile
      * @param TempFileFactory $tempFileFactory
      * @param Validator $validator
-     * @param int $maxDirectories
      * @param string $userDirectory
      * @param FileSystem $fileSystem
      */
@@ -74,7 +58,6 @@ class SideloadDir implements IngesterInterface
         $deleteFile,
         TempFileFactory $tempFileFactory,
         Validator $validator,
-        $maxDirectories,
         $userDirectory,
         FileSystem $fileSystem
     ) {
@@ -90,7 +73,6 @@ class SideloadDir implements IngesterInterface
         $this->tempFileFactory = $tempFileFactory;
         $this->validator = $validator;
         $this->fileSystem = $fileSystem;
-        $this->maxDirectories = $maxDirectories;
     }
 
     public function getLabel()
@@ -144,7 +126,7 @@ class SideloadDir implements IngesterInterface
             ? $data['ingest_filename']
             : $this->directory . DIRECTORY_SEPARATOR . $data['ingest_filename'];
         $fileinfo = new \SplFileInfo($filepath);
-        $realPath = $this->verifyFileOrDir($fileinfo);
+        $realPath = $this->fileSystem->verifyFileOrDir($fileinfo);
         if (is_null($realPath)) {
             $errorStore->addError('ingest_filename', new Message(
                 'Cannot sideload file "%s". File does not exist or is not inside main directory or does not have sufficient permissions', // @translate
@@ -189,27 +171,32 @@ class SideloadDir implements IngesterInterface
         if (!$this->fileSystem->dirHasNoFileAndIsRemovable($realIngestDirectory)) {
             return;
         }
+
         // The ingest directory may have empty directories, so recursive remove it.
         $this->rrmdir($realIngestDirectory);
     }
 
     public function form(PhpRenderer $view, array $options = [])
     {
+        $listDirs = $this->fileSystem->listDirs($this->userDirectory);
+        $hasMoreDirectories = $this->fileSystem->hasMoreDirectories();
+
         // When the user dir is different from the main dir, prepend the main
         // dir path to simplify hydration.
-        $prependPath = $this->userDirectory === $this->directory
-            ? ''
-            : mb_substr($this->userDirectory, mb_strlen($this->directory) + 1) .  DIRECTORY_SEPARATOR;
+        if ($this->userDirectory !== $this->directory) {
+            $prependPath = mb_substr($this->userDirectory, mb_strlen($this->directory) + 1) .  DIRECTORY_SEPARATOR;
+            $length = mb_strlen($prependPath);
+            $result = [];
+            foreach ($listDirs as $dir) {
+                $result[$dir] = mb_substr($dir, $length);
+            }
+            $listDirs = $result;
+        }
 
-        $mainDirectory = $this->directory;
-        $this->directory = $this->userDirectory;
-        $this->listDirs($prependPath);
-        $this->directory = $mainDirectory;
-
-        $isEmptyDirs = !count($this->listDirs);
+        $isEmptyDirs = !count($listDirs);
         if ($isEmptyDirs) {
             $emptyOptionDir = 'No directory: add directories in the directory or check its path'; // @translate
-        } elseif ($this->hasMoreDirs) {
+        } elseif ($hasMoreDirectories) {
             $emptyOptionDir = 'Select a directory to sideload all files inside… (only first ones are listed)'; // @translate
         } else {
             $emptyOptionDir = 'Select a directory to sideload all files inside…'; // @translate
@@ -220,7 +207,7 @@ class SideloadDir implements IngesterInterface
             ->setOptions([
                 'label' => 'Directory', // @translate
                 'info' => 'Directories and files without sufficient permissions are skipped.', // @translate
-                'value_options' => $this->listDirs,
+                'value_options' => $listDirs,
                 'empty_option' => '',
             ])
             ->setAttributes([
@@ -246,100 +233,6 @@ class SideloadDir implements IngesterInterface
             . $view->formRow($recursive);
     }
 
-    /**
-     * Get all directories available to sideload.
-     */
-    protected function listDirs(string $prependPath = ''): void
-    {
-        $this->listDirs = [];
-        $this->hasMoreDirs = false;
-
-        $dir = new \SplFileInfo($this->directory);
-        if (!$dir->isDir()) {
-            return;
-        }
-
-        $countDirs = 0;
-
-        $lengthDir = strlen($this->directory) + 1;
-        $dir = new \RecursiveDirectoryIterator($this->directory);
-        // Prevent UnexpectedValueException "Permission denied" by excluding
-        // directories that are not executable or readable.
-        $dir = new \RecursiveCallbackFilterIterator($dir, function ($current, $key, $iterator) {
-            if ($iterator->isDir() && (!$iterator->isExecutable() || !$iterator->isReadable())) {
-                return false;
-            }
-            return true;
-        });
-        $iterator = new \RecursiveIteratorIterator($dir);
-        /** @var \SplFileInfo $file */
-        foreach ($iterator as $filepath => $file) {
-            if ($file->isDir()) {
-                if (!$this->hasMoreDirs && $this->verifyFileOrDir($file, true)) {
-                    // There are two filepaths for one dirpath: "." and "..".
-                    $filepath = $file->getRealPath();
-                    // Don't list empty directories.
-                    if (!$this->fileSystem->dirHasNoFileAndIsRemovable($filepath)) {
-                        // For security, don't display the full path to the user.
-                        $relativePath = substr($filepath, $lengthDir);
-                        if (!isset($this->listDirs[$prependPath . $relativePath])) {
-                            $this->listDirs[$prependPath . $relativePath] = $relativePath;
-                            if ($this->maxDirectories && ++$countDirs >= $this->maxDirectories) {
-                                $this->hasMoreDirs = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        natcasesort($this->listDirs);
-    }
-
-    /**
-     * Verify the passed file or directory.
-     *
-     * Working off the "real" base directory and "real" filepath: both must
-     * exist and have sufficient permissions; the filepath must begin with the
-     * base directory path to avoid problems with symlinks; the base directory
-     * must be server-writable to delete the file; and the file must be a
-     * readable regular file or directory.
-     *
-     * @param \SplFileInfo $fileinfo
-     * @return string|null The real file path or null if the file is invalid.
-     */
-    protected function verifyFileOrDir(\SplFileInfo $fileinfo, bool $isDir = false): ?string
-    {
-        if (false === $this->directory) {
-            return null;
-        }
-        $realPath = $fileinfo->getRealPath();
-        if (false === $realPath) {
-            return null;
-        }
-        if ($realPath === $this->directory) {
-            return null;
-        }
-        if (0 !== strpos($realPath, $this->directory)) {
-            return null;
-        }
-        if ($this->deleteFile && !$fileinfo->getPathInfo()->isWritable()) {
-            return null;
-        }
-        if (!$fileinfo->isReadable()) {
-            return null;
-        }
-        if ($isDir) {
-            if (!$fileinfo->isDir() || !$fileinfo->isExecutable()) {
-                return null;
-            }
-        } elseif (!$fileinfo->isFile()) {
-            return null;
-        }
-        return $realPath;
-    }
-
     protected function checkIngestDir(string $directory, ErrorStore $errorStore): ?string
     {
         if (!strlen($directory)) {
@@ -358,7 +251,7 @@ class SideloadDir implements IngesterInterface
             ? $directory
             : $this->directory . DIRECTORY_SEPARATOR . $directory;
         $fileinfo = new \SplFileInfo($directory);
-        $directory = $this->verifyFileOrDir($fileinfo, true);
+        $directory = $this->fileSystem->verifyFileOrDir($fileinfo, true);
         if (is_null($directory)) {
             // Set a clearer message in some cases.
             if ($this->deleteFile && !$fileinfo->getPathInfo()->isWritable()) {
