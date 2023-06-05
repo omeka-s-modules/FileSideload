@@ -13,16 +13,6 @@ use Omeka\Stdlib\Message;
 
 class Module extends AbstractModule
 {
-    /**
-     * @var string
-     */
-    protected $directory;
-
-    /**
-     * @var bool
-     */
-    protected $deleteFile;
-
     public function getConfig()
     {
         return include __DIR__ . '/config/module.config.php';
@@ -125,23 +115,22 @@ class Module extends AbstractModule
         if (is_null($isChecked)) {
             $isChecked = false;
             $settings = $services->get('Omeka\Settings');
-            $mainDir = (string) $settings->get('file_sideload_directory', '');
-            if (!strlen($mainDir)) {
+            $sideloadDir = (string) $settings->get('file_sideload_directory', '');
+            if (!strlen($sideloadDir)) {
                 return;
             }
 
-            $mainDir = realpath($mainDir);
-            if ($mainDir === false) {
+            $sideloadDir = realpath($sideloadDir);
+            if ($sideloadDir === false) {
                 return;
             }
 
-            $dir = new \SplFileInfo($mainDir);
+            $dir = new \SplFileInfo($sideloadDir);
             if (!$dir->isDir() || !$dir->isReadable() || !$dir->isExecutable()) {
                 return;
             }
 
-            $this->directory = $mainDir;
-            $this->deleteFile = $settings->get('file_sideload_delete_file') === 'yes';
+            $deleteFile = $settings->get('file_sideload_delete_file') === 'yes';
 
             $isChecked = true;
         }
@@ -183,16 +172,16 @@ class Module extends AbstractModule
                 continue;
             }
 
-            $isAbsolutePathInsideDir = $this->directory && strpos($ingestDirectory, $this->directory) === 0;
+            $isAbsolutePathInsideDir = $sideloadDir && strpos($ingestDirectory, $sideloadDir) === 0;
             $directory = $isAbsolutePathInsideDir
                 ? $ingestDirectory
-                : $this->directory . DIRECTORY_SEPARATOR . $ingestDirectory;
+                : $sideloadDir . DIRECTORY_SEPARATOR . $ingestDirectory;
             $fileinfo = new \SplFileInfo($directory);
             $directory = $fileSystem->verifyFileOrDir($fileinfo, true);
 
             if (is_null($directory)) {
                 // Set a clearer message in some cases.
-                if ($this->deleteFile && !$fileinfo->getPathInfo()->isWritable()) {
+                if ($deleteFile && !$fileinfo->getPathInfo()->isWritable()) {
                     $errorStore->addError('ingest_directory', new Message(
                         'Ingest directory "%s" is not writeable but the config requires deletion after upload.', // @translate
                         $ingestDirectory
@@ -251,10 +240,6 @@ class Module extends AbstractModule
         $userId = $services->get('Application')->getMvcEvent()->getRouteMatch()->getParam('id');
         $user = $userId ? $entityManager->find(\Omeka\Entity\User::class, $userId) : null;
 
-        $mainDirectory = $settings->get('file_sideload_directory', '');
-        $this->directory = $mainDirectory;
-        $this->deleteFile = $settings->get('file_sideload_delete_file') === 'yes';
-
         // Manage a direct creation (no id).
         if ($user) {
             /** @var \Omeka\Settings\UserSettings $userSettings */
@@ -270,10 +255,11 @@ class Module extends AbstractModule
         // for the collections or the users. Maybe 3, but greater depths may
         // cause issues with big directories.
         // This option only applies to the user interface anyway.
-        $maxDepth = (int) $settings->get('file_sideload_directory_depth_user', 2);
-        $maxDirs = (int) $settings->get('file_sideload_max_directories');
-        if ($mainDirectory) {
-            $directories = $fileSystem->listDirs($mainDirectory, $maxDepth, $maxDirs);
+        $sideloadDir = (string) $settings->get('file_sideload_directory', '');
+        $hasMainDirectory = $sideloadDir !== '';
+        if ($hasMainDirectory) {
+            $maxDepth = (int) $settings->get('file_sideload_directory_depth_user', 2);
+            $directories = $fileSystem->listDirs($sideloadDir, $maxDepth);
             $directories = array_combine($directories, $directories);
         } else {
             $directories = [];
@@ -293,7 +279,7 @@ class Module extends AbstractModule
                     'id' => 'filesideload_user_dir',
                     'value' => $userDir,
                     'required' => false,
-                    'disabled' => empty($mainDirectory),
+                    'disabled' => !$hasMainDirectory,
                     'class' => 'chosen-select',
                     'data-placeholder' => count($directories)
                         ? 'Select a sub-directory…' // @translate
@@ -337,11 +323,11 @@ class Module extends AbstractModule
             return false;
         }
         // The user directory is stored as a sub-path of the main directory.
-        $mainDirectory = $this->getServiceLocator()->get('Omeka\Settings')->get('file_sideload_directory');
-        if (!$mainDirectory || !realpath($mainDirectory)) {
+        $sideloadDir = (string) $this->getServiceLocator()->get('Omeka\Settings')->get('file_sideload_directory');
+        if (!strlen($sideloadDir) || !realpath($sideloadDir)) {
             return false;
         }
-        $userDirectory = $mainDirectory . DIRECTORY_SEPARATOR . $dir;
+        $userDirectory = $sideloadDir . DIRECTORY_SEPARATOR . $dir;
         $dir = new \SplFileInfo($userDirectory);
         $valid = $dir->isDir() && $dir->isExecutable() && $dir->isReadable();
         if (isset($context['delete_file']) && 'yes' === $context['delete_file']) {
