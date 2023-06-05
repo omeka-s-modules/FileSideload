@@ -14,13 +14,20 @@ class FileSystem
      */
     protected $deleteFile;
 
+    /**
+     * @var int
+     */
+    protected $maxDirectories;
+
     public function __construct(
         ?string $sideloadDirectory,
-        bool $deleteFile
+        bool $deleteFile,
+        int $maxDirectories
     ) {
         // Only work on the resolved real directory path.
         $this->sideloadDirectory = $sideloadDirectory ? realpath($sideloadDirectory) : '';
         $this->deleteFile = $deleteFile;
+        $this->maxDirectories = $maxDirectories;
     }
 
     /**
@@ -53,8 +60,11 @@ class FileSystem
     /**
      * Recursively get all directories available in a directory.
      */
-    public function listDirs(string $directory, int $maxDepth = -1, int $maxDirectories = 0): array
-    {
+    public function listDirs(
+        string $directory,
+        int $maxDepth = -1,
+        ?int $maxDirs = null
+    ): array {
         $listDirs = [];
 
         $dir = new \SplFileInfo($directory);
@@ -64,6 +74,7 @@ class FileSystem
 
         $countDirs = 0;
         $lengthDir = strlen($this->sideloadDirectory) + 1;
+        $maxDirs ??= $this->maxDirectories;
 
         $dir = new \RecursiveDirectoryIterator($directory);
         // Prevent UnexpectedValueException "Permission denied" by excluding
@@ -93,7 +104,7 @@ class FileSystem
                         // Use keys for quicker process on big directories.
                         if (!array_key_exists($relativePath, $listDirs)) {
                             $listDirs[$relativePath] = null;
-                            if ($maxDirectories && ++$countDirs >= $maxDirectories) {
+                            if ($maxDirs && ++$countDirs >= $maxDirs) {
                                 break;
                             }
                         }
