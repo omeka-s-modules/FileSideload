@@ -146,9 +146,9 @@ class SideloadDir implements IngesterInterface
         $tempFile->setSourceName($data['ingest_filename']);
 
         // Copy the file to a temp path, so it is managed as a real temp file (#14).
-        copy($realPath, $tempFile->getTempPath());
+        $copySuccess = copy($realPath, $tempFile->getTempPath());
 
-        if (!$this->validator->validate($tempFile, $errorStore)) {
+        if (!($copySuccess && $this->validator->validate($tempFile, $errorStore))) {
             return;
         }
 
