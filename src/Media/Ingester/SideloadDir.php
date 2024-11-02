@@ -147,8 +147,15 @@ class SideloadDir implements IngesterInterface
 
         // Copy the file to a temp path, so it is managed as a real temp file (#14).
         $copySuccess = copy($realPath, $tempFile->getTempPath());
+        if (!$copySuccess) {
+            $errorStore->addError('ingest_filename', sprintf(
+                'Cannot sideload file "%s". File cannot be copied to the temp directory', // @translate
+                $filepath
+            ));
+            return;
+        }
 
-        if (!($copySuccess && $this->validator->validate($tempFile, $errorStore))) {
+        if (!$this->validator->validate($tempFile, $errorStore)) {
             return;
         }
 
